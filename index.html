@@ -146,14 +146,20 @@ section.collapsed>.tg::after{transform:rotate(-90deg)}
 section.collapsed>:not(h2){display:none!important}
 section.collapsed>h2{margin:0!important}
 @media (prefers-reduced-motion:reduce){.tg::after{transition:none}}
+.hd{display:flex;align-items:center;gap:10px}
+.hd h1{flex:1;min-width:0}
+.hd .addp{margin:0;flex:none}
+.bkm{font-size:12px;color:var(--muted);text-align:right}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 
 </head>
 <body>
 <main data-tab="day">
-  <header>
+  <header class="hd">
     <h1>Планирование бюджета</h1>
+    <span class="bkm" id="bkm" aria-live="polite"></span>
+    <button type="button" class="addp" id="bk">Бэкап</button>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Разделы"><button type="button" role="tab" id="tab-day" data-t="day">Каждый день</button><button type="button" role="tab" id="tab-long" data-t="long">Долгосрок</button></nav>
@@ -238,7 +244,13 @@ section.collapsed>h2{margin:0!important}
       return { async set(d){ col()[id]=d; save(c); }, async update(d){ col()[id]=Object.assign({},col()[id],d); save(c); }, async delete(){ delete col()[id]; save(c); } }; },
     collection(c){ return { onSnapshot(f){ (subs[c]=subs[c]||[]).push(f); setTimeout(()=>f(snap(c)),0); return ()=>{}; } }; }
   };
-  window.claude={use:async n=>n==='db'?db:null};
+  // Пустой браузер: сначала последний бэкап из data.json рядом со страницей, без сети — SEED
+  async function restore(){
+    try{ if(localStorage.getItem(KEY)) return; }catch(_){ return; }
+    try{ const r=await fetch('data.json',{cache:'no-store'}); if(r.ok){ mem=await r.json(); localStorage.setItem(KEY,JSON.stringify(mem)); } }catch(_){ }
+  }
+  let ready=null;
+  window.claude={use:async n=>{ if(n!=='db') return null; await (ready=ready||restore()); return db; }};
 })();
 </script>
 <script>
@@ -548,6 +560,40 @@ section.collapsed>h2{margin:0!important}
   });
   plan.addEventListener('change',ev2=>{const r=ev2.target.closest('.row');if(!r)return;const k=r.dataset.k;
     if(ev2.target.checked)done[k]=1;else delete done[k];r.classList.toggle('is-done',!!done[k]);save();});
+})();
+</script>
+<script>
+/* Бэкап: кладёт базу из localStorage в data.json ветки me. Токен GitHub хранится только в этом браузере. */
+(function(){
+  const API='https://api.github.com/repos/Skalunova/Saver/contents/data.json', BR='me', TK='saver-gh-token', AT='saver-backup-at';
+  const b=document.getElementById('bk'), m=document.getElementById('bkm');
+  const get=k=>{ try{ return localStorage.getItem(k); }catch(_){ return null; } };
+  const put=(k,v)=>{ try{ v==null?localStorage.removeItem(k):localStorage.setItem(k,v); }catch(_){ } };
+  const stamp=()=>{ const t=get(AT); m.textContent=t?'бэкап '+t:''; };
+  const b64=s=>{ const u=new TextEncoder().encode(s); let r=''; for(let i=0;i<u.length;i+=8192) r+=String.fromCharCode.apply(null,u.subarray(i,i+8192)); return btoa(r); };
+  const fail=t=>{ throw {t}; };
+  stamp();
+  b.addEventListener('click',async()=>{
+    const raw=get('budget-db-v1'); if(!raw){ m.textContent='нечего сохранять'; return; }
+    let tk=get(TK);
+    if(!tk){ tk=(prompt('Токен GitHub с доступом Contents: read and write к репозиторию Saver')||'').trim(); if(!tk) return; put(TK,tk); }
+    const text=JSON.stringify(JSON.parse(raw),null,1)+'\n', h={Authorization:'Bearer '+tk,Accept:'application/vnd.github+json'};
+    b.disabled=true; m.textContent='сохраняю…';
+    try{
+      const r=await fetch(API+'?ref='+BR,{headers:h,cache:'no-store'});
+      if(r.status===401||r.status===403){ put(TK,null); fail('токен не подошёл'); }
+      if(!r.ok&&r.status!==404) fail('ошибка GitHub '+r.status);
+      const cur=r.ok?await r.json():null, d=new Date(), z=n=>String(n).padStart(2,'0');
+      const ts=z(d.getDate())+'.'+z(d.getMonth()+1)+' '+z(d.getHours())+':'+z(d.getMinutes());
+      if(!cur||cur.content.replace(/\s/g,'')!==b64(text)){
+        const p=await fetch(API,{method:'PUT',headers:h,body:JSON.stringify({message:'Бэкап данных '+ts,content:b64(text),branch:BR,sha:cur?cur.sha:undefined})});
+        if(p.status===401||p.status===403){ put(TK,null); fail('токен не подошёл'); }
+        if(!p.ok) fail('ошибка GitHub '+p.status);
+      }
+      put(AT,ts); stamp();
+    }catch(e){ m.textContent=e&&e.t?e.t:'нет связи'; }
+    b.disabled=false;
+  });
 })();
 </script>
 </body>

@@ -1,0 +1,54 @@
+# Один и тот же файл в ветках main и me.
+# Пуш в main собирает сайт: main → /Saver/, me → /Saver/me/.
+# Пуш в me (в том числе бэкап со страницы) перезапускает сборку на main:
+# окружение github-pages по умолчанию принимает деплой только из основной ветки.
+name: Pages
+
+on:
+  push:
+    branches: [main, me]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  redeploy:
+    if: github.ref == 'refs/heads/me'
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh workflow run pages.yml --ref main -R "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+      - uses: actions/checkout@v4
+        with:
+          ref: me
+          path: me
+      - run: |
+          mkdir -p _site/me
+          cp main/index.html _site/
+          cp me/index.html me/data.json _site/me/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
