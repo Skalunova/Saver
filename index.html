@@ -5,31 +5,34 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Планирование бюджета</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap">
 <style>
 :root{
-  --bg:#EEF2F5; --surface:#FFFFFF; --line:#DCE3E9; --ink:#16202B; --muted:#5E6D7B;
-  --accent:#1D5C9E; --accent-soft:#E1ECF7; --save:#23744A; --save-soft:#E3F2E9; --pay:#9A4B1E;
-  --done:#9AA7B3;
+  --bg:#F4F1EC; --surface:#FFFFFF; --field:#F1ECE5; --line:#E6E0D8; --dots:#CFC7BC; --ink:#15120F; --muted:#6F675E;
+  --accent:#15120F; --save:#1E7A47; --pay:#B4441B;
+  --hero:#AED9F4; --hero-ink:#0E1C2B; --hero-track:#FFFFFF;
+  --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#ECE6DE; --t-ink:#15120F;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0E141A; --surface:#161F28; --line:#243140; --ink:#E6EDF3; --muted:#8FA1B2;
-    --accent:#86B7EE; --accent-soft:#1B2B3D; --save:#7CCB98; --save-soft:#17291F; --pay:#E4A37A;
-    --done:#4C5A67; color-scheme:dark;
+    --bg:#141210; --surface:#1E1B18; --field:#2A2622; --line:#332E29; --dots:#4A433C; --ink:#F4F1EC; --muted:#A69D93;
+    --accent:#F4F1EC; --save:#7CD39C; --pay:#FF9B76;
+    --hero:#22435C; --hero-ink:#EAF5FD; --hero-track:#0F2333;
+    --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#3A342E; --t-ink:#15120F; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0E141A; --surface:#161F28; --line:#243140; --ink:#E6EDF3; --muted:#8FA1B2;
-  --accent:#86B7EE; --accent-soft:#1B2B3D; --save:#7CCB98; --save-soft:#17291F; --pay:#E4A37A;
-  --done:#4C5A67; color-scheme:dark;
+  --bg:#141210; --surface:#1E1B18; --field:#2A2622; --line:#332E29; --dots:#4A433C; --ink:#F4F1EC; --muted:#A69D93;
+  --accent:#F4F1EC; --save:#7CD39C; --pay:#FF9B76;
+  --hero:#22435C; --hero-ink:#EAF5FD; --hero-track:#0F2333;
+  --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#3A342E; --t-ink:#15120F; color-scheme:dark;
 }
 /* Типографика: 15 — текст и заголовки блоков, 13 — подписи и вторичное, 24 — ключевые суммы, 20 — заголовок страницы.
    Начертания: 400 и 600. Цвет: ink — основное, muted — вторичное, save/pay — только статус суммы, accent — только управление.
    Сетка: шаг 4 px; внутри блока отступ 16, между элементами 12, строки списков 8 по вертикали, вложенные строки сдвинуты на 12. */
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font:15px/1.45 "Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:20px 16px 40px;font-variant-numeric:tabular-nums}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 "Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:20px 16px 40px;font-variant-numeric:tabular-nums}
 main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 h1{font-size:20px;font-weight:600;line-height:1.2;margin:0 0 4px}
 h2,.h3{font-size:15px;font-weight:600;line-height:1.45;margin:0}
@@ -104,6 +107,7 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
 #bh b{font-weight:400;white-space:nowrap}
 #bh .tot b,#bh .hmh b{font-weight:600}
 #bh .hm{border-top:1px solid var(--line)}
+#bh .hm.closed .hmb{display:none}
 #bh .hmh{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;background:none;border:0;border-radius:0;padding:8px 0;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
 #bh .emp{color:var(--muted)}
 
@@ -146,6 +150,79 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
 .ft{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:4px 0}
 .bkm{font-size:13px;color:var(--muted)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ===== Дизайн-система v2 (пилот: «Каждый день») =====
+   Шрифт Golos Text. Роли текста:
+   .big-n — главная сумма экрана, 64/800, единица 22/700;  .mid-n — сумма блока, 36/800, единица 18/600;
+   h1 — 30/800;  h2 — 20/800;  текст — 15/400;  подпись .lbl — 14/400 muted;  шильдик .tag — 12/700.
+   Цифры всегда табличные, крупные — с плотным трекингом.
+   Поверхности: фон --bg, карточка-блок --surface (радиус 24, без рамки), главный блок экрана — цветная --hero.
+   Внутри карточки без подложек: строки на разделителях, итоги — строкой с точечным лидером (.lead).
+   Управление: тёмные пилюли (кнопки, вкладки), поля — заливка --field без рамки. */
+h1{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:4px 0 8px}
+h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
+.tabs{display:flex;gap:8px;background:none;padding:0;border-radius:0}
+.tabs button{flex:none;padding:10px 18px;border-radius:999px;background:var(--surface);color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.panel{border:0;border-radius:24px;padding:20px}
+.tg::after{content:'▾';width:32px;height:32px;border-radius:50%;background:var(--field);display:grid;place-items:center;font-size:12px;color:var(--ink);flex:none}
+.bud button,.df button{border-radius:999px;padding:12px 20px;background:var(--ink);color:var(--bg)}
+:root[data-theme="dark"] .bud button,:root[data-theme="dark"] .df button{color:var(--bg)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .bud button,:root:not([data-theme="light"]) .df button{color:var(--bg)}}
+.bud input:not([type=checkbox]),.df input:not([type=checkbox]),.df select{background:var(--field);border:0;border-radius:14px;padding:12px 14px}
+
+/* Крупные числа */
+.big-n,.mid-n{display:flex;align-items:baseline;gap:4px;font-weight:800;line-height:1;letter-spacing:-.04em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.big-n .n{font-size:64px}
+.big-n .u{font-size:22px;font-weight:700;letter-spacing:0}
+.mid-n .n{font-size:36px}
+.mid-n .u{font-size:18px;font-weight:600;letter-spacing:0;opacity:.7}
+.lbl{font-size:14px}
+
+/* Точечный лидер: «название ……… сумма» */
+.lead{display:flex;align-items:baseline;gap:8px}
+.lead i{flex:1;border-bottom:2px dotted var(--dots);min-width:16px;transform:translateY(-4px)}
+.lead b{font-weight:600;white-space:nowrap}
+
+/* Шильдик */
+.tag{display:inline-block;font-size:12px;font-weight:700;line-height:1;padding:5px 9px;border-radius:999px;background:var(--t-grey);color:var(--ink);white-space:nowrap;vertical-align:1px}
+.tag.t-green{background:var(--t-green);color:var(--t-ink)}
+.tag.t-red{background:var(--t-red);color:var(--t-ink)}
+
+/* Прогресс-бар: заполнение — потрачено, засечка — норма на сегодня */
+.bar{position:relative;height:16px;border-radius:999px;background:var(--hero-track);overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--hero-ink);border-radius:999px}
+.bar s{position:absolute;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--pay)}
+
+/* Главный блок «Траты на жизнь» */
+#today{background:var(--hero);color:var(--hero-ink);gap:16px}
+#today .lbl{color:var(--hero-ink);opacity:.75}
+#today .lead i{border-color:currentColor;opacity:.3}
+#today .tg::after{background:rgba(255,255,255,.55);color:var(--hero-ink)}
+#bt,#bm{display:grid;gap:10px}
+#bm{padding-top:4px}
+
+/* История трат */
+#bh>.tot{display:grid;gap:4px;padding:4px 0 12px}
+#bh>.tot span{font-size:14px;font-weight:400;color:var(--muted)}
+#bh>.tot b{font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1}
+#bh .hm{border-top:1px solid var(--line)}
+#bh .hmh{padding:14px 0;font-size:17px;font-weight:800;letter-spacing:-.01em}
+#bh .hmh b{font-weight:800}
+#bh .hmb>div{padding:10px 0;border-top:1px solid var(--line)}
+#bh .hmb>div:first-child{border-top:0;padding-top:2px}
+#bh .hmb b{font-weight:500}
+
+/* Чекбоксы списков */
+#shop input[type=checkbox],#wish input[type=checkbox]{-webkit-appearance:none;appearance:none;width:24px;height:24px;border:2px solid var(--ink);border-radius:8px;background:var(--surface);display:grid;place-content:center;cursor:pointer}
+#shop input[type=checkbox]:checked,#wish input[type=checkbox]:checked{background:var(--ink)}
+#shop input[type=checkbox]:checked::before,#wish input[type=checkbox]:checked::before{content:'';width:10px;height:5px;border:solid var(--surface);border-width:0 0 2.5px 2.5px;transform:translateY(-1px) rotate(-45deg)}
+#wish input[type=checkbox]:disabled{opacity:.3;cursor:default}
+.wi,.si{padding:12px 0}
+.wi .pr{color:var(--ink)}
+.wi.done .pr{opacity:.6}
+/* Кнопки удаления не наследуют заливку пилюль */
+:root .panel button.x,:root .panel button.hx,:root .panel button.wx{background:none;color:var(--muted);padding:0 0 0 12px;border-radius:0}
 </style>
 
 </head>
@@ -362,7 +439,7 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
   const dm=d=>String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0');
   let spend={}, items={}, wishes=null, curBal=0; const mOpen={};
   document.getElementById('today').innerHTML='<h2 style="margin:0">Траты на жизнь</h2><div id="bt"></div>'+
-    '<div class="pair" id="bm"></div>';
+    '<div id="bm"></div>';
   const bd=document.getElementById('bd'), ba=document.getElementById('ba'), bt=document.getElementById('bt'), bm=document.getElementById('bm'), be=document.getElementById('be');
   bd.value=iso(today);
   bd.addEventListener('change',()=>renderBud());
@@ -373,10 +450,12 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
     const bal=Math.round((days*L+COVER-spent)*100)/100; curBal=bal;
     // Меньше MIN € не считается деньгами: такой остаток копится до первого дня, где выходит от MIN €
     const MIN=8;
-    if(bal>=MIN){ bt.innerHTML='<div class="lbl">Сегодня, '+dm(today)+', можно ещё</div><div class="tm pos">'+eur(Math.floor(bal))+'</div>'; }
+    // Крупное число: цифры гротеском, единица мелко рядом
+    const num=(v,u)=>'<span class="n">'+Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0')+'</span><span class="u">'+u+'</span>';
+    const lead=(l,v)=>'<div class="lead"><span>'+l+'</span><i></i><b>'+v+'</b></div>';
+    if(bal>=MIN){ bt.innerHTML='<div class="lbl">Можно сегодня, '+dm(today)+'</div><div class="big-n">'+num(Math.floor(bal),'€')+'</div>'; }
     else { const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal);
-      bt.innerHTML='<div class="pair"><div><div class="lbl">Сегодня, '+dm(today)+', можно</div><div class="tm neg">0 €</div></div>'+
-        '<div><div class="lbl">Снова можно с '+dm(back)+'</div><div class="tm pos">'+eur(rest)+'</div></div></div>'; }
+      bt.innerHTML='<div class="lbl">Можно сегодня, '+dm(today)+'</div><div class="big-n">'+num(0,'€')+'</div>'+lead('Снова можно с '+dm(back),eur(rest)); }
     const dv=spend[bd.value]||0, dd=bd.value.split('-');
     // Период между поступлениями: 13-е → 27-е, 28-е → 12-е; первый период начинается 22.09
     const Y=today.getFullYear(), M=today.getMonth(), D=today.getDate();
@@ -385,9 +464,12 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
     const pn=D<13?new Date(Y,M,13):D<28?new Date(Y,M,28):new Date(Y,M+1,13), pe=addD(pn,-1);
     const pd=Math.round((pn-ps)/864e5);
     let pSpent=0; for(const k in spend){ if(k>=iso(ps)&&k<=iso(pe)) pSpent+=spend[k]; }
-    const tile=(l,v)=>'<div><div class="lbl">'+l+'</div><div class="tm">'+v+'</div></div>';
     const norm=Math.min(pd,Math.max(0,Math.round((today-ps)/864e5)+1))*L, r2s=Math.round(pSpent*100)/100;
-    bm.innerHTML=tile(bd.value===iso(today)?'Расходы за сегодня':'Расходы за '+dd[2]+'.'+dd[1],eur(Math.round(dv*100)/100))+'<div><div class="lbl">Потрачено '+dm(ps)+'–'+dm(pe)+'</div><div class="tm '+(r2s>norm?'neg':'pos')+'">'+eur(r2s)+'<div class="sm">из '+eur(pd*L)+'</div></div></div>';
+    const lim=pd*L, over=r2s>norm;
+    bm.innerHTML='<div class="lbl">Потрачено '+dm(ps)+'–'+dm(pe)+' <span class="tag '+(over?'t-red':'t-green')+'">'+(over?'выше нормы':'в норме')+'</span></div>'+
+      '<div class="mid-n">'+num(r2s,'/'+Math.round(lim).toLocaleString('ru-RU').replace(/\s/g,'\u00a0')+' €')+'</div>'+
+      '<div class="bar" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(lim)+', норма на сегодня '+eur(norm)+'"><i style="width:'+Math.min(100,r2s/lim*100)+'%"></i><s style="left:'+Math.min(100,norm/lim*100)+'%"></s></div>'+
+      lead(bd.value===iso(today)?'Расходы за сегодня':'Расходы за '+dd[2]+'.'+dd[1],eur(Math.round(dv*100)/100));
     const {out,big}=dayOut();
     const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(MOVE),Object.keys(big)))].sort();
     const line=(l,v,c)=>'<div><span>'+l+'</span><b'+(c?' class="'+c+'"':'')+'>'+v+'</b></div>';
@@ -418,7 +500,7 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
       const row=document.createElement('div'), can=!w.done&&w.price<=curBal;
       row.className='wi'+(w.done?' done':can?' ok':'');
       const nm=document.createElement('span'); nm.className='nm'; nm.textContent=w.name;
-      const pr=document.createElement('span'); pr.className='pr'; pr.textContent=eur(w.price);
+      const pr=document.createElement('span'); pr.className='pr tag '+(!w.done&&can?'t-green':'t-grey'); pr.textContent=eur(w.price);
       const b=document.createElement('input'); b.type='checkbox'; b.checked=!!w.done; b.disabled=!w.done&&!can; b.setAttribute('aria-label','Купила: '+w.name);
       b.onchange=()=>b.checked?takeWish(w):undoWish(w);
       const x=document.createElement('button'); x.type='button'; x.className='wx'; x.textContent='×'; x.setAttribute('aria-label','Убрать из списка: '+w.name);
