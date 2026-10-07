@@ -461,7 +461,7 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
       p.evs.forEach(e=>e.pays.forEach(x=>{ if(!/^закрыть нехватку/.test(x[0])) outs.push([ds(e)+' · '+x[0],x[1]]); }));
       const inSum=ins.reduce((a,x)=>a+x[1],0), outSum=outs.reduce((a,x)=>a+x[1],0);
       const sv=p.evs.reduce((a,e)=>a+e.save,0), need=p.evs.reduce((a,e)=>a+(e.need||0),0), bal=inSum-spent;
-      const now=p.from<=today&&today<nx, pk=iso(p.from), open=pk in pOpen?pOpen[pk]:nx>today, range=d2(p.from)+'–'+d2(to), net=sv-need;
+      const now=p.from<=today&&today<nx, pk=iso(p.from), open=pk in pOpen?pOpen[pk]:now, range=d2(p.from)+'–'+d2(to), net=sv-need;
       const tag='';
       html+='<div class="per'+(now?' now':'')+(open?'':' closed')+'">'+
         '<button type="button" class="ph" data-p="'+pk+'" aria-expanded="'+open+'"><span class="pt">'+range+'</span>'+(now?'<span class="tag">сейчас</span>':'')+tag+'<b class="'+(net<0?'neg':'pos')+'">'+(net<0?'−':'+')+money(Math.abs(net))+'</b></button>'+
