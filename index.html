@@ -15,17 +15,17 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#141210; --surface:#1E1B18; --field:#2A2622; --line:#332E29; --dots:#4A433C; --ink:#F4F1EC; --muted:#A69D93;
-    --accent:#F4F1EC; --save:#7CD39C; --pay:#FF9B76;
-    --hero:#22435C; --hero-ink:#EAF5FD; --hero-track:#0F2333;
-    --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#3A342E; --t-ink:#15120F; color-scheme:dark;
+    --bg:#0C0C0D; --surface:#19191B; --field:#242427; --line:#2C2C30; --dots:#3C3C42; --ink:#F5F5F3; --muted:#9C9CA3;
+    --accent:#F5F5F3; --save:#6FD69A; --pay:#FF8F6B;
+    --hero:#AED9F4; --hero-ink:#0E1C2B; --hero-track:#FFFFFF;
+    --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#2E2E33; --t-ink:#15120F; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#141210; --surface:#1E1B18; --field:#2A2622; --line:#332E29; --dots:#4A433C; --ink:#F4F1EC; --muted:#A69D93;
-  --accent:#F4F1EC; --save:#7CD39C; --pay:#FF9B76;
-  --hero:#22435C; --hero-ink:#EAF5FD; --hero-track:#0F2333;
-  --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#3A342E; --t-ink:#15120F; color-scheme:dark;
+  --bg:#0C0C0D; --surface:#19191B; --field:#242427; --line:#2C2C30; --dots:#3C3C42; --ink:#F5F5F3; --muted:#9C9CA3;
+    --accent:#F5F5F3; --save:#6FD69A; --pay:#FF8F6B;
+    --hero:#AED9F4; --hero-ink:#0E1C2B; --hero-track:#FFFFFF;
+    --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#2E2E33; --t-ink:#15120F; color-scheme:dark;
 }
 /* Типографика: 15 — текст и заголовки блоков, 13 — подписи и вторичное, 24 — ключевые суммы, 20 — заголовок страницы.
    Начертания: 400 и 600. Цвет: ink — основное, muted — вторичное, save/pay — только статус суммы, accent — только управление.
@@ -161,10 +161,14 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
    Управление: тёмные пилюли (кнопки, вкладки), поля — заливка --field без рамки. */
 h1{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.05;margin:4px 0 8px}
 h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
-.tabs{display:flex;gap:8px;background:none;padding:0;border-radius:0}
-.tabs button{flex:none;padding:10px 18px;border-radius:999px;background:var(--surface);color:var(--muted)}
-.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
-.panel{border:0;border-radius:24px;padding:20px}
+/* Переключатель вкладок: дорожка и бегунок, бегунок едет за main[data-tab] */
+.tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--surface);padding:4px;border-radius:999px}
+.tabs::before{content:'';position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:999px;background:var(--ink);transition:transform .2s ease}
+main[data-tab="long"] .tabs::before{transform:translateX(100%)}
+.tabs button{position:relative;padding:10px 12px;border-radius:999px;background:none;color:var(--muted);transition:color .2s}
+.tabs button[aria-selected="true"]{background:none;color:var(--bg)}
+@media (prefers-reduced-motion:reduce){.tabs::before,.tabs button{transition:none}}
+.panel{border:0;border-radius:24px;padding:20px;grid-template-columns:minmax(0,1fr)}
 .tg::after{content:'▾';width:32px;height:32px;border-radius:50%;background:var(--field);display:grid;place-items:center;font-size:12px;color:var(--ink);flex:none}
 .bud button,.df button{border-radius:999px;padding:12px 20px;background:var(--ink);color:var(--bg)}
 :root[data-theme="dark"] .bud button,:root[data-theme="dark"] .df button{color:var(--bg)}
@@ -221,6 +225,21 @@ h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
 .wi,.si{padding:12px 0}
 .wi .pr{color:var(--ink)}
 .wi.done .pr{opacity:.6}
+/* Форма траты */
+#bf.addf{display:grid;gap:12px}
+#bf .amt{display:flex;align-items:baseline;gap:6px;border-bottom:2px solid var(--line);cursor:text}
+#bf .amt:focus-within,#bf #bn:focus{border-color:var(--ink)}
+#bf #ba{flex:1;width:100%;min-width:0;border:0;border-radius:0;background:none;padding:2px 0 6px;font-size:40px;font-weight:800;letter-spacing:-.04em;color:var(--ink);outline:none;-moz-appearance:textfield}
+#bf #ba::-webkit-outer-spin-button,#bf #ba::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+#bf #ba::placeholder{color:var(--dots)}
+#bf .amt span{font-size:22px;font-weight:700;color:var(--muted)}
+#bf #bn{border:0;border-bottom:2px solid var(--line);border-radius:0;background:none;padding:10px 0;outline:none}
+#bf .addr{display:flex;align-items:center;gap:8px}
+#bf .addr button{margin-left:auto}
+.dpill{position:relative;display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:999px;background:var(--field);font-weight:600;cursor:pointer}
+.dpill::after{content:'▾';font-size:11px;color:var(--muted)}
+.dpill:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+#bf .dpill #bd{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;opacity:0;cursor:pointer}
 /* Кнопки удаления не наследуют заливку пилюль */
 :root .panel button.x,:root .panel button.hx,:root .panel button.wx{background:none;color:var(--muted);padding:0 0 0 12px;border-radius:0}
 </style>
@@ -236,7 +255,7 @@ h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
 
   <section class="panel next bud" id="today" data-tab="day" data-closed aria-live="polite"></section>
 
-  <section class="panel bud" id="hist" data-tab="day" data-closed><h2 style="margin:0">История трат</h2><form id="bf"><input type="date" id="bd" aria-label="День"><input type="number" id="ba" step="0.01" inputmode="decimal" placeholder="потратила, €" title="Ошиблась — добавь сумму с минусом" aria-label="Потратила, €"><input type="text" id="bn" placeholder="на что" maxlength="30" aria-label="На что"><button type="submit">Добавить</button></form><div class="err" id="be"></div><div id="bh"></div></section>
+  <section class="panel bud" id="hist" data-tab="day" data-closed><h2 style="margin:0">История трат</h2><form id="bf" class="addf"><label class="amt"><input type="number" id="ba" step="0.01" inputmode="decimal" placeholder="0" title="Ошиблась — добавь сумму с минусом" aria-label="Потратила, €"><span>€</span></label><input type="text" id="bn" placeholder="на что" maxlength="30" aria-label="На что"><div class="addr"><label class="dpill"><span id="bdl">сегодня</span><input type="date" id="bd" aria-label="День траты"></label><button type="submit">Добавить</button></div></form><div class="err" id="be"></div><div id="bh"></div></section>
 
   <section class="panel bud" id="shop" data-tab="day" data-closed>
     <h2 style="margin:0">Список покупок</h2>
@@ -444,6 +463,7 @@ h2{font-size:20px;font-weight:800;letter-spacing:-.02em}
   bd.value=iso(today);
   bd.addEventListener('change',()=>renderBud());
   function renderBud(){
+    const bp=bd.value.split('-'); document.getElementById('bdl').textContent=bd.value===iso(today)?'сегодня':bp[2]+'.'+bp[1];
     const days=Math.round((today-START)/864e5)+1;
     let spent=0, planned=0; for(const k in spend){ spent+=spend[k]; if(k>iso(today)) planned+=spend[k]; }
     const COVER=122; // перерасход 22.09–1.10 закрыт доп. поступлениями 28.09
