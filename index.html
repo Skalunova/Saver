@@ -210,11 +210,14 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #bm .lbl{grid-area:1/2}
 #bt .big-n{grid-area:2/1;align-self:end;justify-content:center}
 #bm .gauge{grid-area:2/2}
-#bt .big-n .n,.gauge .gnum .n{font-size:48px}
-#bt .big-n .u,.gauge .gnum .u{font-size:20px;font-weight:700}
-.gauge{position:relative;width:150px;max-width:100%;padding-bottom:26px}
+/* «Можно» высотой до верхней трети подковы, сумма в подкове меньше и не касается дуги */
+#bt .big-n .n{font-size:76px}
+#bt .big-n .u{font-size:24px;font-weight:700}
+.gauge .gnum .n{font-size:43px}
+.gauge .gnum .u{font-size:18px;font-weight:700}
+.gauge{position:relative;width:150px;max-width:100%;padding-bottom:14px}
 .gauge svg{display:block;width:100%;height:auto;overflow:visible}
-.gauge path{fill:none;stroke-width:13;stroke-linecap:round}
+.gauge path{fill:none;stroke-width:11;stroke-linecap:round}
 .gauge .gt{stroke:var(--hero-track)}
 .gauge .gf{stroke:var(--hero-fill)}
 .gauge .gnum{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:baseline;gap:3px;font-weight:800;letter-spacing:-.04em;line-height:1}
