@@ -8,24 +8,25 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap">
 <style>
 :root{
-  --bg:#F4F1EC; --surface:#FFFFFF; --field:#F1ECE5; --line:#E6E0D8; --dots:#CFC7BC; --ink:#15120F; --muted:#6F675E;
-  --accent:#15120F; --save:#1E7A47; --pay:#B4441B;
-  --hero:#AED9F4; --hero-ink:#0E1C2B; --hero-track:#FFFFFF; --hero-fill:#0E1C2B; --hero-tick:#B4441B; --hero-chip:rgba(255,255,255,.55);
-  --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#ECE6DE; --t-ink:#15120F;
+  /* Палитра: светлая — белый, #EDECF3, голубой #B7D8F1, персиковый #EFC5B7, чёрный; тёмная — чёрный, синий #214372, коралловый #D97370, #EDECF3, белый */
+  --bg:#EDECF3; --surface:#FFFFFF; --field:#EDECF3; --line:#E2E1EA; --dots:#C4C3CF; --ink:#000000; --muted:#6A6977;
+  --accent:#000000; --save:#214372; --pay:#C4504C;
+  --hero:#B7D8F1; --hero-ink:#000000; --hero-track:#FFFFFF; --hero-fill:#000000; --hero-chip:rgba(255,255,255,.6);
+  --t-ok:#B7D8F1; --t-ok-ink:#000000; --t-warn:#EFC5B7; --t-warn-ink:#000000; --t-grey:#EDECF3;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0C0C0D; --surface:#19191B; --field:#242427; --line:#2C2C30; --dots:#3C3C42; --ink:#F5F5F3; --muted:#9C9CA3;
-    --accent:#F5F5F3; --save:#6FD69A; --pay:#FF8F6B;
-    --hero:#1A2446; --hero-ink:#F2F4FB; --hero-track:#2B3866; --hero-fill:#FF8BB8; --hero-tick:#FFFFFF; --hero-chip:rgba(255,255,255,.12);
-    --t-green:#62D38A; --t-red:#FF8BB8; --t-grey:#2E2E33; --t-ink:#15120F; color-scheme:dark;
+    --bg:#000000; --surface:#111115; --field:#1C1C22; --line:#24242B; --dots:#3A3A44; --ink:#FFFFFF; --muted:#A3A2AE;
+    --accent:#FFFFFF; --save:#EDECF3; --pay:#D97370;
+    --hero:#214372; --hero-ink:#FFFFFF; --hero-track:rgba(255,255,255,.18); --hero-fill:#D97370; --hero-chip:rgba(255,255,255,.14);
+    --t-ok:#EDECF3; --t-ok-ink:#000000; --t-warn:#D97370; --t-warn-ink:#000000; --t-grey:#24242B; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0C0C0D; --surface:#19191B; --field:#242427; --line:#2C2C30; --dots:#3C3C42; --ink:#F5F5F3; --muted:#9C9CA3;
-    --accent:#F5F5F3; --save:#6FD69A; --pay:#FF8F6B;
-    --hero:#1A2446; --hero-ink:#F2F4FB; --hero-track:#2B3866; --hero-fill:#FF8BB8; --hero-tick:#FFFFFF; --hero-chip:rgba(255,255,255,.12);
-    --t-green:#62D38A; --t-red:#FF8BB8; --t-grey:#2E2E33; --t-ink:#15120F; color-scheme:dark;
+  --bg:#000000; --surface:#111115; --field:#1C1C22; --line:#24242B; --dots:#3A3A44; --ink:#FFFFFF; --muted:#A3A2AE;
+  --accent:#FFFFFF; --save:#EDECF3; --pay:#D97370;
+  --hero:#214372; --hero-ink:#FFFFFF; --hero-track:rgba(255,255,255,.18); --hero-fill:#D97370; --hero-chip:rgba(255,255,255,.14);
+  --t-ok:#EDECF3; --t-ok-ink:#000000; --t-warn:#D97370; --t-warn-ink:#000000; --t-grey:#24242B; color-scheme:dark;
 }
 /* Типографика: 15 — текст и заголовки блоков, 13 — подписи и вторичное, 24 — ключевые суммы, 20 — заголовок страницы.
    Начертания: 400 и 600. Цвет: ink — основное, muted — вторичное, save/pay — только статус суммы, accent — только управление.
@@ -190,25 +191,30 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 
 /* Шильдик */
 .tag{display:inline-block;font-size:12px;font-weight:700;line-height:1;padding:5px 9px;border-radius:999px;background:var(--t-grey);color:var(--ink);white-space:nowrap;vertical-align:1px}
-.tag.t-green{background:var(--t-green);color:var(--t-ink)}
-.tag.t-red{background:var(--t-red);color:var(--t-ink)}
+.tag.t-ok{background:var(--t-ok);color:var(--t-ok-ink)}
+.tag.t-warn{background:var(--t-warn);color:var(--t-warn-ink)}
+#today .tag.t-ok{background:var(--surface);color:var(--ink)}
 
 /* Прогресс-бар: заполнение — потрачено, засечка — норма на сегодня */
-.bar{position:relative;height:16px;border-radius:999px;background:var(--hero-track);overflow:hidden}
-.bar i{position:absolute;inset:0 auto 0 0;background:var(--hero-fill);border-radius:999px}
-.bar s{position:absolute;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--hero-tick)}
-
-/* Главный блок «Траты на жизнь» */
 #today{background:var(--hero);color:var(--hero-ink);gap:16px}
 #today .lbl{color:var(--hero-ink);opacity:.75}
 #today .lead i{border-color:currentColor;opacity:.3}
 #today .tg::after{background:var(--hero-chip);color:var(--hero-ink)}
-#bt,#bm{display:grid;gap:10px}
-#bm{border-top:1px solid currentColor;border-color:color-mix(in srgb,var(--hero-ink) 18%,transparent);padding-top:16px}
-#bm .prow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600}
-#bm .pfoot{display:flex;justify-content:space-between;gap:8px;font-size:14px}
-#bm .pfoot b{font-weight:700}
-#bm .pfoot span:last-child{opacity:.75}
+/* Две колонки: «Можно сегодня» и «Потрачено» с подковой */
+#today .hgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+#bt,#bm{display:grid;gap:6px;min-width:0}
+#bt .big-n .n{font-size:56px}
+#bm{justify-items:center;text-align:center}
+.gauge{position:relative;width:100%;max-width:150px}
+.gauge svg{display:block;width:100%;height:auto;overflow:visible}
+.gauge path{fill:none;stroke-width:13;stroke-linecap:round}
+.gauge .gt{stroke:var(--hero-track)}
+.gauge .gf{stroke:var(--hero-fill)}
+.gauge .gnum{position:absolute;left:0;right:0;bottom:-2px;display:flex;justify-content:center;align-items:baseline;gap:3px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.gauge .gnum .n{font-size:30px}
+.gauge .gnum .u{font-size:15px;font-weight:700;letter-spacing:0}
+#bm .gsub{font-size:13px;opacity:.75}
+#bl{display:grid;gap:8px;border-top:1px solid color-mix(in srgb,var(--hero-ink) 18%,transparent);padding-top:14px}
 
 /* История трат */
 #bh>.tot{display:grid;gap:4px;padding:4px 0 12px}
@@ -460,9 +466,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   const addD=(d,k)=>{const x=new Date(d);x.setDate(x.getDate()+k);return x;};
   const dm=d=>String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0');
   let spend={}, items={}, wishes=null, curBal=0; const mOpen={};
-  document.getElementById('today').innerHTML='<h2 style="margin:0">Траты на жизнь</h2><div id="bt"></div>'+
-    '<div id="bm"></div>';
-  const bd=document.getElementById('bd'), ba=document.getElementById('ba'), bt=document.getElementById('bt'), bm=document.getElementById('bm'), be=document.getElementById('be');
+  document.getElementById('today').innerHTML='<h2 style="margin:0">Траты на жизнь</h2><div class="hgrid"><div id="bt"></div><div id="bm"></div></div><div id="bl"></div>';
+  const bd=document.getElementById('bd'), ba=document.getElementById('ba'), bt=document.getElementById('bt'), bm=document.getElementById('bm'), bl=document.getElementById('bl'), be=document.getElementById('be');
   bd.value=iso(today);
   bd.addEventListener('change',()=>renderBud());
   function renderBud(){
@@ -478,9 +483,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const lead=(l,v)=>'<div class="lead"><span>'+l+'</span><i></i><b>'+v+'</b></div>';
     // Группа «Сегодня»: одна главная цифра и её пояснения
     const tv=Math.round((spend[iso(today)]||0)*100)/100;
-    if(bal>=MIN){ bt.innerHTML='<div class="lbl">Можно сегодня</div><div class="big-n">'+num(Math.floor(bal),'€')+'</div>'+lead('Потрачено сегодня',eur(tv)); }
-    else { const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal);
-      bt.innerHTML='<div class="lbl">Можно сегодня</div><div class="big-n">'+num(0,'€')+'</div>'+lead('Потрачено сегодня',eur(tv))+lead('Снова можно с '+dm(back),eur(rest)); }
+    bt.innerHTML='<div class="lbl">Можно сегодня</div><div class="big-n">'+num(bal>=MIN?Math.floor(bal):0,'€')+'</div>';
+    bl.innerHTML=lead('Потрачено сегодня',eur(tv));
+    if(bal<MIN){ const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal); bl.innerHTML+=lead('Снова можно с '+dm(back),eur(rest)); }
     const dv=spend[bd.value]||0, dd=bd.value.split('-');
     // Сумма за выбранный в форме день — рядом с выбором даты
     document.getElementById('bdv').textContent=bd.value===iso(today)?'':'за день '+eur(Math.round(dv*100)/100);
@@ -493,10 +498,12 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     let pSpent=0; for(const k in spend){ if(k>=iso(ps)&&k<=iso(pe)) pSpent+=spend[k]; }
     const norm=Math.min(pd,Math.max(0,Math.round((today-ps)/864e5)+1))*L, r2s=Math.round(pSpent*100)/100;
     const lim=pd*L, over=r2s>norm;
-    // Группа «Период»: заголовок со статусом, полоса, подписи под полосой
-    bm.innerHTML='<div class="prow"><span>Период '+dm(ps)+'–'+dm(pe)+'</span><span class="tag '+(over?'t-red':'t-green')+'">'+(over?'выше нормы':'в норме')+'</span></div>'+
-      '<div class="bar" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(lim)+', норма на сегодня '+eur(norm)+'"><i style="width:'+Math.min(100,r2s/lim*100)+'%"></i><s style="left:'+Math.min(100,norm/lim*100)+'%"></s></div>'+
-      '<div class="pfoot"><span><b>'+eur(r2s)+'</b> потрачено</span><span>из '+eur(lim)+'</span></div>';
+    // Потрачено за период: подкова заполняется долей от лимита, внутри — сумма
+    const pct=Math.min(100,r2s/lim*100), arc='M12 70 A58 58 0 0 1 128 70';
+    bm.innerHTML='<div class="lbl">Потрачено</div>'+
+      '<div class="gauge" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(lim)+' за '+dm(ps)+'–'+dm(pe)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg>'+
+      '<div class="gnum">'+num(r2s,'€')+'</div></div>'+
+      '<div class="gsub">из '+eur(lim)+' до '+dm(pe)+'</div><div><span class="tag '+(over?'t-warn':'t-ok')+'">'+(over?'выше нормы':'в норме')+'</span></div>';
     const {out,big}=dayOut();
     const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(MOVE),Object.keys(big)))].sort();
     const line=(l,v,c)=>'<div><span>'+l+'</span><b'+(c?' class="'+c+'"':'')+'>'+v+'</b></div>';
@@ -527,7 +534,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       const row=document.createElement('div'), can=!w.done&&w.price<=curBal;
       row.className='wi'+(w.done?' done':can?' ok':'');
       const nm=document.createElement('span'); nm.className='nm'; nm.textContent=w.name;
-      const pr=document.createElement('span'); pr.className='pr tag '+(!w.done&&can?'t-green':'t-grey'); pr.textContent=eur(w.price);
+      const pr=document.createElement('span'); pr.className='pr tag '+(!w.done&&can?'t-ok':'t-grey'); pr.textContent=eur(w.price);
       const b=document.createElement('input'); b.type='checkbox'; b.checked=!!w.done; b.disabled=!w.done&&!can; b.setAttribute('aria-label','Купила: '+w.name);
       b.onchange=()=>b.checked?takeWish(w):undoWish(w);
       const x=document.createElement('button'); x.type='button'; x.className='wx'; x.textContent='×'; x.setAttribute('aria-label','Убрать из списка: '+w.name);
