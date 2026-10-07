@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap">
 <style>
 :root{
-  /* Палитра: светлая — белый, #EDECF3, голубой #B7D8F1, персиковый #EFC5B7, чёрный; тёмная — чёрный, синий #214372, коралловый #D97370, #EDECF3, белый */
+  /* Палитра: светлая — белый, #EDECF3, голубой #B7D8F1, персиковый #EFC5B7, чёрный; тёмная — чёрный, синий #124476, розовый #E86C6C, #EDECF3, белый */
   --bg:#EDECF3; --surface:#FFFFFF; --field:#EDECF3; --line:#E2E1EA; --dots:#C4C3CF; --ink:#000000; --muted:#6A6977;
   --accent:#000000; --save:#214372; --pay:#C4504C;
   --hero:#B7D8F1; --hero-ink:#000000; --hero-track:#FFFFFF; --hero-fill:#000000; --hero-chip:rgba(255,255,255,.6);
@@ -17,16 +17,16 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#000000; --surface:#111115; --field:#1C1C22; --line:#24242B; --dots:#3A3A44; --ink:#FFFFFF; --muted:#A3A2AE;
-    --accent:#FFFFFF; --save:#EDECF3; --pay:#D97370;
-    --hero:#214372; --hero-ink:#FFFFFF; --hero-track:rgba(255,255,255,.18); --hero-fill:#D97370; --hero-chip:rgba(255,255,255,.14);
-    --t-ok:#EDECF3; --t-ok-ink:#000000; --t-warn:#D97370; --t-warn-ink:#000000; --t-grey:#24242B; color-scheme:dark;
+    --accent:#FFFFFF; --save:#EDECF3; --pay:#E86C6C;
+    --hero:#124476; --hero-ink:#FFFFFF; --hero-track:rgba(255,255,255,.18); --hero-fill:#E86C6C; --hero-chip:rgba(255,255,255,.14);
+    --t-ok:#EDECF3; --t-ok-ink:#000000; --t-warn:#E86C6C; --t-warn-ink:#000000; --t-grey:#24242B; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#000000; --surface:#111115; --field:#1C1C22; --line:#24242B; --dots:#3A3A44; --ink:#FFFFFF; --muted:#A3A2AE;
-  --accent:#FFFFFF; --save:#EDECF3; --pay:#D97370;
-  --hero:#214372; --hero-ink:#FFFFFF; --hero-track:rgba(255,255,255,.18); --hero-fill:#D97370; --hero-chip:rgba(255,255,255,.14);
-  --t-ok:#EDECF3; --t-ok-ink:#000000; --t-warn:#D97370; --t-warn-ink:#000000; --t-grey:#24242B; color-scheme:dark;
+  --accent:#FFFFFF; --save:#EDECF3; --pay:#E86C6C;
+  --hero:#124476; --hero-ink:#FFFFFF; --hero-track:rgba(255,255,255,.18); --hero-fill:#E86C6C; --hero-chip:rgba(255,255,255,.14);
+  --t-ok:#EDECF3; --t-ok-ink:#000000; --t-warn:#E86C6C; --t-warn-ink:#000000; --t-grey:#24242B; color-scheme:dark;
 }
 /* Типографика: 15 — текст и заголовки блоков, 13 — подписи и вторичное, 24 — ключевые суммы, 20 — заголовок страницы.
    Начертания: 400 и 600. Цвет: ink — основное, muted — вторичное, save/pay — только статус суммы, accent — только управление.
@@ -201,11 +201,17 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #today .lead i{border-color:currentColor;opacity:.3}
 #today .tg::after{background:var(--hero-chip);color:var(--hero-ink)}
 /* Две колонки: «Можно сегодня» и «Потрачено» с подковой */
-#today .hgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-#bt,#bm{display:grid;gap:6px;min-width:0}
+#today .hgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:6px}
+#bt,#bm{display:contents}
+#bt .lbl{grid-area:1/1}
+#bt .big-n{grid-area:2/1;align-self:end}
 #bt .big-n .n{font-size:56px}
-#bm{justify-items:center;text-align:center}
-.gauge{position:relative;width:100%;max-width:150px}
+#bm>*{grid-column:2;justify-self:end;text-align:right}
+#bm .lbl{grid-row:1}
+#bm .gauge{grid-row:2}
+#bm .gsub{grid-row:3}
+#bm .gtag{grid-row:4;margin-top:4px}
+.gauge{position:relative;width:150px;max-width:100%}
 .gauge svg{display:block;width:100%;height:auto;overflow:visible}
 .gauge path{fill:none;stroke-width:13;stroke-linecap:round}
 .gauge .gt{stroke:var(--hero-track)}
@@ -214,7 +220,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 .gauge .gnum .n{font-size:30px}
 .gauge .gnum .u{font-size:15px;font-weight:700;letter-spacing:0}
 #bm .gsub{font-size:13px;opacity:.75}
-#bl{display:grid;gap:8px;border-top:1px solid color-mix(in srgb,var(--hero-ink) 18%,transparent);padding-top:14px}
+#bl{display:grid;gap:8px;padding-top:4px}
 
 /* История трат */
 #bh>.tot{display:grid;gap:4px;padding:4px 0 12px}
@@ -223,8 +229,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #bh .hm{border-top:1px solid var(--line)}
 #bh .hmh{padding:14px 0;font-size:17px;font-weight:800;letter-spacing:-.01em}
 #bh .hmh b{font-weight:800}
-#bh .hmb>div{padding:10px 0;border-top:1px solid var(--line)}
-#bh .hmb>div:first-child{border-top:0;padding-top:2px}
+#bh .hmb>div{padding:8px 0;border-top:0}
+#bh .hmb>div:first-child{padding-top:2px}
 #bh .hmb b{font-weight:500}
 
 /* Чекбоксы списков */
@@ -232,7 +238,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #shop input[type=checkbox]:checked,#wish input[type=checkbox]:checked{background:var(--ink)}
 #shop input[type=checkbox]:checked::before,#wish input[type=checkbox]:checked::before{content:'';width:10px;height:5px;border:solid var(--surface);border-width:0 0 2.5px 2.5px;transform:translateY(-1px) rotate(-45deg)}
 #wish input[type=checkbox]:disabled{opacity:.3;cursor:default}
-.wi,.si{padding:12px 0}
+.wi,.si{padding:10px 0;border-top:0}
 .wi .pr{color:var(--ink)}
 .wi.done .pr{opacity:.6}
 /* Форма траты */
@@ -503,7 +509,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     bm.innerHTML='<div class="lbl">Потрачено</div>'+
       '<div class="gauge" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(lim)+' за '+dm(ps)+'–'+dm(pe)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg>'+
       '<div class="gnum">'+num(r2s,'€')+'</div></div>'+
-      '<div class="gsub">из '+eur(lim)+' до '+dm(pe)+'</div><div><span class="tag '+(over?'t-warn':'t-ok')+'">'+(over?'выше нормы':'в норме')+'</span></div>';
+      '<div class="gsub">из '+eur(lim)+' до '+dm(pe)+'</div><div class="gtag"><span class="tag '+(over?'t-warn':'t-ok')+'">'+(over?'выше нормы':'в норме')+'</span></div>';
     const {out,big}=dayOut();
     const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(MOVE),Object.keys(big)))].sort();
     const line=(l,v,c)=>'<div><span>'+l+'</span><b'+(c?' class="'+c+'"':'')+'>'+v+'</b></div>';
