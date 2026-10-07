@@ -33,7 +33,7 @@ h2{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute
 .sub{color:var(--muted);margin:4px 0 0;font-size:13px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
 .next{background:var(--accent-soft);border-color:transparent}
-.next .when{font-weight:600;color:var(--accent)}
+.next .when{font-size:12.5px;font-weight:600;color:var(--accent);margin-top:2px}
 .next .big{font:600 26px/1.1 "Roboto",sans-serif;margin:0 0 2px;color:var(--save);white-space:nowrap}
 .next .big.in{color:var(--ink)}
 .next .duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
@@ -44,6 +44,8 @@ h2{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute
 .next li{display:flex;justify-content:space-between;gap:12px}
 .next li span:last-child{white-space:nowrap}
 .next li.out span:last-child{color:var(--pay)}
+.next li.mi{font-size:12.5px;color:var(--muted);padding-left:10px}
+.next li.mi.ok span:first-child{text-decoration:line-through}
 .next li.left{font-weight:600;border-top:1px solid var(--line);padding-top:5px;margin-top:3px}
 .rules{display:grid;gap:10px;margin:0;padding:0;list-style:none}
 .rules li{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:start}
@@ -211,7 +213,7 @@ section.collapsed>h2{margin:0!important}
   </section>
 
   <section class="panel" id="debts" data-tab="long" data-closed>
-    <h2>Долги и взносы</h2>
+    <h2>Обязательные платежи</h2>
     <table class="debts" id="dt">
       <tr data-d="2026-09-25"><td><input type="checkbox" data-p="fee-260925" aria-label="Оплачено: Взнос за семестр TUHH, 25.09"></td><td>Взнос за семестр TUHH</td><td>420 €</td><td>25.09</td></tr>
       <tr data-d="2026-09-28"><td><input type="checkbox" data-p="friend-260928" aria-label="Оплачено: Долг наличкой, 28.09"></td><td>Долг наличкой</td><td>175 €</td><td>28.09</td></tr>
@@ -293,7 +295,7 @@ section.collapsed>h2{margin:0!important}
   ev[1].got=460; ev[1].need=867; // без остатка и заначки
   ev[0].start=true; // 25.09 — стартовый баланс, не поступление
   const BASE=ev.map(e=>Object.assign({},e,{pays:e.pays.slice()}));
-  const RUB=105.5; let extras=[], next=null, planOk=false, gone={};
+  const RUB=105.5; let extras=[], next=null, planOk=false, gone={}, myDebts=[];
   const MOVE={'2026-10-02':589,'2026-10-05':89}; // покупки для переезда, вне дневного лимита
   const money=t=>{ const v=parseFloat(String(t).replace(/[^\d,.]/g,'').replace(',','.'))||0; return /₽/.test(t)?Math.round(v/RUB):v; };
   // Сколько ушло за день по истории трат: записи, покупки для переезда, оплаченные платежи
@@ -310,6 +312,16 @@ section.collapsed>h2{margin:0!important}
     ev.length=0; BASE.forEach(e=>ev.push(Object.assign({},e,{pays:e.pays.slice()})));
     ev.forEach(e=>{ let r=e.pays.filter(x=>gone[x[2]]).reduce((a,x)=>a+x[1],0); if(!r) return;
       e.pays=e.pays.filter(x=>!gone[x[2]]); const c=Math.min(e.need||0,r); if(c){ e.need-=c; r-=c; } e.save+=r; });
+    // Платежи, добавленные вручную: списываются с последнего поступления «на жизнь» не позже их даты
+    const lives=ev.filter(e=>!e.xid&&e.pays.some(x=>/^на жизнь/.test(x[0])));
+    myDebts.forEach(x=>{ const d=new Date(x.date+'T00:00'); if(!(x.amount>0)||d<START||!lives.length) return;
+      let o=lives[0]; lives.forEach(e=>{ if(e.date<=d) o=e; });
+      o.pays.push([x.name,x.amount,x.id,x.date,x.done]); const c=Math.min(o.save,x.amount); o.save-=c;
+      if(x.amount>c){ o.need=(o.need||0)+x.amount-c; o.extra='добрать '+eur(o.need); } });
+    // Нехватку поступления «на жизнь» закрывают поступления без жизни в том же периоде (блок-счёт, премия)
+    ev.forEach(e=>{ if(e.start||lives.includes(e)||!(e.save>0)) return; let prev=null; lives.forEach(o=>{ if(o.date<=e.date) prev=o; });
+      if(!prev||!(prev.need>0)) return; const c=Math.min(prev.need,e.save); prev.need-=c; prev.covered=(prev.covered||0)+c; e.save-=c;
+      e.pays.push(['закрыть нехватку '+ds(prev),c]); prev.extra=prev.need?'добрать '+eur(prev.need):'нехватку закрыли поступления'; });
     extras.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(x=>{
       const p=x.date.split('-').map(Number), d=new Date(p[0],p[1]-1,p[2]);
       const amt=Math.round(x.cur==='RUB'?x.amount/RUB:x.amount);
@@ -333,13 +345,19 @@ section.collapsed>h2{margin:0!important}
   const isLife=p=>/^на жизнь/.test(p[0]), must=next.pays.filter(p=>!isLife(p)).reduce((a,p)=>a+p[1],0);
   const dn=k=>k%10===1&&k%100!==11?'день':[2,3,4].includes(k%10)&&![12,13,14].includes(k%100)?'дня':'дней';
   const lifeTxt=p=>{ const m=/(\d+)\s*дн/.exec(p[0]); return m?'Жизнь '+m[1]+' '+dn(+m[1]):cap(p[0]); };
-  n.innerHTML='<div class="when">'+(xs.length?'Поступило ':'Поступит ')+ds(next)+'.'+(next.y%100)+(days===0?' · сегодня':days===1?' · завтра':' · через '+days+' дн.')+'</div>'+
-    '<div class="duo"><div><div class="big in">'+eur((next.got||next.inc)+xIn)+'</div></div>'+
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  // Напоминание: за что и когда платить; строки из таблицы платежей берут оттуда название, дату и отметку
+  const row=id=>{ const i=id&&document.querySelector('#dt input[data-p="'+id+'"]'); return i?{name:i.closest('tr').cells[1].textContent,date:i.closest('tr').dataset.d,done:i.checked}:null; };
+  const ml={}; next.pays.filter(p=>!isLife(p)).forEach((p,i)=>{ const r=row(p[2]), k=p[2]||'p'+i;
+    ml[k]=ml[k]||{name:r?r.name:cap(p[0]),date:p[3]||(r&&r.date)||iso(next.date),done:r?r.done:!!p[4],a:0}; ml[k].a+=p[1]; });
+  const mlist=Object.values(ml).sort((a,b)=>a.date.localeCompare(b.date)), fd=d=>{ const q=d.split('-'); return q[2]+'.'+q[1]; };
+  n.innerHTML='<div class="duo"><div><div class="big in">'+eur((next.got||next.inc)+xIn)+'</div><div class="when">'+(xs.length?'поступило ':'поступит ')+ds(next)+'.'+(next.y%100)+(days===0?' · сегодня':days===1?' · завтра':' · через '+days+' дн.')+'</div></div>'+
     (next.need?'<div class="need"><div class="big">−'+eur(next.need)+'</div><div class="sub">нужно раздобыть</div></div>'
       :'<div><div class="big">'+(toSave?'+'+eur(toSave):'0 €')+'</div><div class="sub">в копилку</div></div>')+'</div>'+
     '<ul>'+(next.need?'<li><span>Добыть дополнительно</span><span>+'+eur(next.need)+'</span></li>':'')+
-    (next.covered?'<li><span>Закрыто поступлениями</span><span>+'+eur(next.covered)+'</span></li>':'')+
-    (must?'<li class="out"><span>Обязательные траты</span><span>−'+eur(must)+'</span></li>':'')+
+    (next.covered?'<li><span>Доплата из поступлений</span><span>+'+eur(next.covered)+'</span></li>':'')+
+    (must?'<li class="out"><span>Обязательные траты</span><span>−'+eur(must)+'</span></li>'+
+      mlist.map(x=>'<li class="mi'+(x.done?' ok':'')+'"><span>'+fd(x.date)+' · '+esc(x.name)+(x.done?' · оплачено':'')+'</span><span>'+eur(x.a)+'</span></li>').join(''):'')+
     next.pays.filter(isLife).map(p=>'<li class="out"><span>'+lifeTxt(p)+'</span><span>−'+eur(p[1])+'</span></li>').join('')+
     '<li class="left"><span>'+leftTxt+'</span><span>'+eur(left)+'</span></li>'+
     (xs.length?xs.map(x=>'<li><span>+ '+cap(x.incNote)+'</span><span>+'+eur(x.inc)+'</span></li>').join('')+
@@ -471,7 +489,7 @@ section.collapsed>h2{margin:0!important}
         try{ await db.doc('paid/'+i.dataset.p).set({done:i.checked,del:true}); }catch(_){ document.getElementById('derr').textContent='Не удалилось, попробуй ещё раз.'; } });
       tr.cells[3].appendChild(del); });
     document.querySelectorAll('.debts input[data-p]').forEach(i=>i.addEventListener('change',async()=>{
-      i.closest('tr').classList.toggle('paid',i.checked); renderBud();
+      i.closest('tr').classList.toggle('paid',i.checked); renderNext(); renderBud();
       try{ await db.doc('paid/'+i.dataset.p).set({done:i.checked}); }catch(_){ i.checked=!i.checked; i.closest('tr').classList.toggle('paid',i.checked); }
     }));
     const dt=document.getElementById('dt'), derr=document.getElementById('derr');
@@ -497,7 +515,8 @@ section.collapsed>h2{margin:0!important}
         c[0].appendChild(cb); c[1].textContent=x.name; c[2].textContent=x.amount?String(x.amount):'—'; c[3].textContent=(+p[2])+'.'+p[1]+yy; c[3].appendChild(del);
         tr.append(...c); dt.tBodies[0].appendChild(tr);
       });
-      sortRows(); renderBud();
+      myDebts=s.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(x=>x.name&&/^\d{4}-\d\d-\d\d$/.test(String(x.date))).map(x=>({id:x.id,name:String(x.name),amount:money(x.amount),date:String(x.date),done:!!x.done}));
+      sortRows(); build(); renderNext(); renderBud();
     }, ()=>{ derr.textContent='Не удалось загрузить свои платежи. Обнови страницу.'; });
     db.collection('paid').onSnapshot(s=>{ const m={}; gone={}; s.docs.forEach(d=>{ const x=d.data()||{}; m[d.id]=!!x.done; if(x.del) gone[d.id]=true; }); document.querySelectorAll('.debts input[data-p]').forEach(i=>{i.checked=!!m[i.dataset.p]; i.closest('tr').classList.toggle('paid',i.checked);}); document.querySelectorAll('.debts input[data-p]').forEach(i=>{ i.closest('tr').hidden=!!gone[i.dataset.p]; });
       build(); renderNext(); renderBud(); });
