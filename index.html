@@ -215,6 +215,10 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #bt .big-n .u{font-size:24px;font-weight:700}
 .gauge .gnum .n{font-size:43px}
 .gauge .gnum .u{font-size:18px;font-weight:700}
+/* Точная подгонка по макету Полины: подписи ниже на 10, «можно» выше на 23, сумма в подкове выше на 13 */
+#bt .lbl,#bm .lbl{position:relative;top:10px}
+#bt .big-n{position:relative;top:-23px}
+.gauge .gnum{transform:translateY(-13px)}
 .gauge{position:relative;width:150px;max-width:100%;padding-bottom:14px}
 .gauge svg{display:block;width:100%;height:auto;overflow:visible}
 .gauge path{fill:none;stroke-width:11;stroke-linecap:round}
