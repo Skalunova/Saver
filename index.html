@@ -33,7 +33,7 @@ h2{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute
 .sub{color:var(--muted);margin:4px 0 0;font-size:13px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
 .next{background:var(--accent-soft);border-color:transparent}
-.next .when{font-weight:600;color:var(--accent)}
+.next .when{font-size:12.5px;font-weight:600;color:var(--accent);margin-top:2px}
 .next .big{font:600 26px/1.1 "Roboto",sans-serif;margin:0 0 2px;color:var(--save);white-space:nowrap}
 .next .big.in{color:var(--ink)}
 .next .duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
@@ -44,6 +44,8 @@ h2{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute
 .next li{display:flex;justify-content:space-between;gap:12px}
 .next li span:last-child{white-space:nowrap}
 .next li.out span:last-child{color:var(--pay)}
+.next li.mi{font-size:12.5px;color:var(--muted);padding-left:10px}
+.next li.mi.ok span:first-child{text-decoration:line-through}
 .next li.left{font-weight:600;border-top:1px solid var(--line);padding-top:5px;margin-top:3px}
 .debts{width:100%;border-collapse:collapse}
 .debts td{padding:7px 0;border-top:1px solid var(--line);vertical-align:middle}
@@ -239,7 +241,7 @@ section.collapsed>h2{margin:0!important}
   </section>
 
   <section class="panel" id="debts" data-tab="long" data-closed>
-    <h2>Долги и взносы</h2>
+    <h2>Обязательные платежи</h2>
     <table class="debts" id="dt"><tbody></tbody></table>
     <button type="button" class="addp" id="dadd" aria-expanded="false">+ Добавить платёж</button>
     <form id="df" class="df" hidden><input type="text" id="dn" placeholder="что" aria-label="Название"><input type="number" id="da" step="0.01" min="0" inputmode="decimal" placeholder="сумма, €" aria-label="Сумма, €"><input type="date" id="dd" aria-label="Дата"><button type="submit">Добавить</button></form>
@@ -312,12 +314,16 @@ section.collapsed>h2{margin:0!important}
       if(n>0){ e.lifeSum=Math.round(n*L*100)/100; e.pays.push(['на жизнь '+n+' дн. × '+eur(L),e.lifeSum]); }
     });
     const pool=lives.length?lives:ev;
-    const charge=(d,name,a)=>{ if(d<s||d>last||!pool.length) return;
-      let o=pool[0]; pool.forEach(e=>{ if(e.date<=d) o=e; }); o.pays.push([name,a]); };
+    const charge=(d,name,a,done)=>{ if(d<s||d>last||!pool.length) return;
+      let o=pool[0]; pool.forEach(e=>{ if(e.date<=d) o=e; }); o.pays.push([name,a,iso(d),!!done]); };
     months.forEach(([y,m])=>recs.forEach(r=>charge(at(y,m,r.day),r.name,r.amount)));
-    debts.forEach(x=>{ if(x.amount>0) charge(pdt(x.date),x.name,x.amount); });
+    debts.forEach(x=>{ if(x.amount>0) charge(pdt(x.date),x.name,x.amount,x.done); });
     ev.forEach(e=>{ const r=Math.round((e.inc-e.pays.reduce((a,p)=>a+p[1],0))*100)/100;
       e.save=Math.max(0,r); e.need=Math.max(0,-r); if(e.need) e.extra='добрать '+eur(e.need); });
+    // Нехватку поступления «на жизнь» закрывают поступления без жизни в том же периоде
+    if(lives.length) ev.forEach(e=>{ if(e.life||!(e.save>0)) return; let prev=null; lives.forEach(o=>{ if(o.date<=e.date) prev=o; });
+      if(!prev||!(prev.need>0)) return; const c=Math.min(prev.need,e.save); prev.need=Math.round((prev.need-c)*100)/100; prev.covered=(prev.covered||0)+c; e.save-=c;
+      e.pays.push(['закрыть нехватку '+ds(prev),c]); prev.extra=prev.need?'добрать '+eur(prev.need):'нехватку закрыли поступления'; });
     extras.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(x=>{
       const d=pdt(x.date), amt=x.amount;
       const e={date:d,y:d.getFullYear(),m:d.getMonth()+1,d:d.getDate(),inc:amt,incNote:x.note||'поступление',pays:[],save:amt,need:0,xid:x.id};
@@ -341,13 +347,15 @@ section.collapsed>h2{margin:0!important}
     const isLife=p=>/^на жизнь/.test(p[0]), must=next.pays.filter(p=>!isLife(p)).reduce((a,p)=>a+p[1],0);
   const dn=k=>k%10===1&&k%100!==11?'день':[2,3,4].includes(k%10)&&![12,13,14].includes(k%100)?'дня':'дней';
   const lifeTxt=p=>{ const m=/(\d+)\s*дн/.exec(p[0]); return m?'Жизнь '+m[1]+' '+dn(+m[1]):cap(p[0]); };
-  n.innerHTML='<div class="when">'+(xs.length?'Поступило ':'Поступит ')+ds(next)+'.'+(next.y%100)+(days===0?' · сегодня':days===1?' · завтра':' · через '+days+' дн.')+'</div>'+
-      '<div class="duo"><div><div class="big in">'+eur(next.inc+xIn)+'</div></div>'+
+  // Напоминание: за что и когда платить
+  const mlist=next.pays.filter(p=>!isLife(p)).map(p=>({name:p[0],a:p[1],date:p[2]||iso(next.date),done:!!p[3]})).sort((a,b)=>a.date.localeCompare(b.date)), fd=d=>{ const q=d.split('-'); return q[2]+'.'+q[1]; };
+  n.innerHTML='<div class="duo"><div><div class="big in">'+eur(next.inc+xIn)+'</div><div class="when">'+(xs.length?'поступило ':'поступит ')+ds(next)+'.'+(next.y%100)+(days===0?' · сегодня':days===1?' · завтра':' · через '+days+' дн.')+'</div></div>'+
       (next.need?'<div class="need"><div class="big">−'+eur(next.need)+'</div><div class="sub">нужно раздобыть</div></div>'
         :'<div><div class="big">'+(toSave?'+'+eur(toSave):'0 €')+'</div><div class="sub">в копилку</div></div>')+'</div>'+
       '<ul>'+(next.need?'<li><span>Добыть дополнительно</span><span>+'+eur(next.need)+'</span></li>':'')+
-      (next.covered?'<li><span>Закрыто поступлениями</span><span>+'+eur(next.covered)+'</span></li>':'')+
-      (must?'<li class="out"><span>Обязательные траты</span><span>−'+eur(must)+'</span></li>':'')+
+      (next.covered?'<li><span>Доплата из поступлений</span><span>+'+eur(next.covered)+'</span></li>':'')+
+      (must?'<li class="out"><span>Обязательные траты</span><span>−'+eur(must)+'</span></li>'+
+        mlist.map(x=>'<li class="mi'+(x.done?' ok':'')+'"><span>'+fd(x.date)+' · '+esc(x.name)+(x.done?' · оплачено':'')+'</span><span>'+eur(x.a)+'</span></li>').join(''):'')+
     next.pays.filter(isLife).map(p=>'<li class="out"><span>'+lifeTxt(p)+'</span><span>−'+eur(p[1])+'</span></li>').join('')+
       '<li class="left"><span>'+leftTxt+'</span><span>'+eur(left)+'</span></li>'+
       (xs.length?xs.map(x=>'<li><span>+ '+esc(cap(x.incNote))+'</span><span>+'+eur(x.inc)+'</span></li>').join('')+
