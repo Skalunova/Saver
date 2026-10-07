@@ -48,11 +48,11 @@ b{font-weight:600}
 /* Блоки */
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
 .tg{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;user-select:none;-webkit-tap-highlight-color:transparent}
-.tg::after,#bh .hmh span::after,.ph .pt::after{content:'▾';display:inline-block;font-size:13px;font-weight:400;line-height:1;color:var(--muted);transition:transform .15s}
-#bh .hmh span::after,.ph .pt::after{margin-left:6px}
-section.collapsed>.tg::after,#bh .hm.closed .hmh span::after,.per.closed .ph .pt::after{transform:rotate(-90deg)}
+.tg::after,.ph .pt::after{content:'▾';display:inline-block;font-size:13px;font-weight:400;line-height:1;color:var(--muted);transition:transform .15s}
+.ph .pt::after{margin-left:6px}
+section.collapsed>.tg::after,#bh .hm.closed .hmh::after,.per.closed .ph .pt::after{transform:rotate(-90deg)}
 section.collapsed>:not(h2){display:none!important}
-@media (prefers-reduced-motion:reduce){.tg::after,#bh .hmh span::after,.ph .pt::after{transition:none}}
+@media (prefers-reduced-motion:reduce){.tg::after,#bh .hmh::after,.ph .pt::after{transition:none}}
 .tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--line);border-radius:12px;padding:4px}
 .tabs button{font:inherit;font-weight:600;color:var(--muted);background:none;border:0;border-radius:9px;padding:8px;cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
@@ -204,20 +204,19 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #today .lead i{border-color:currentColor;opacity:.3}
 #today .tg::after{background:var(--hero-chip);color:var(--hero-ink)}
 /* Две колонки: «Можно сегодня» и «Потрачено» с подковой */
-#today .hgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:6px}
+#today .hgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;row-gap:var(--hlg,8px);margin-bottom:var(--hgap,0px)}
 #bt,#bm{display:contents}
 #bt>*,#bm>*{justify-self:center;text-align:center}
-#bt .lbl{grid-area:1/1}
-#bm .lbl{grid-area:1/2}
-#bt .big-n{grid-area:2/1;align-self:end;justify-content:center}
-#bm .gauge{grid-area:2/2}
+#bt .big-n{grid-area:1/1;align-self:end;justify-content:center}
+#bm .gauge{grid-area:1/2}
+#bt .lbl{grid-area:2/1}
+#bm .lbl{grid-area:2/2}
 /* «Можно» высотой до верхней трети подковы, сумма в подкове меньше и не касается дуги */
 #bt .big-n .n{font-size:76px}
 #bt .big-n .u{font-size:24px;font-weight:700}
 .gauge .gnum .n{font-size:43px}
 .gauge .gnum .u{font-size:18px;font-weight:700}
 /* Точная подгонка по макету Полины: подписи ниже на 10, «можно» выше на 23, сумма в подкове выше на 13 */
-#bt .lbl,#bm .lbl{position:relative;top:10px}
 #bt .big-n{position:relative;top:var(--dy0,8.5px)}
 .gauge .gnum{transform:translate(3px,var(--dy1,4px))}
 .gauge{position:relative;width:150px;max-width:100%;padding-bottom:0}
@@ -226,19 +225,22 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 .gauge .gt{stroke:var(--hero-track)}
 .gauge .gf{stroke:var(--hero-fill)}
 .gauge .gnum{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:baseline;gap:3px;font-weight:800;letter-spacing:-.04em;line-height:1}
-#bl{display:grid;gap:8px;padding-top:4px}
+#bl{display:grid;gap:8px}
+#today .lead>span,#today .lbl{font-size:15px;color:var(--hero-ink);opacity:.75}
+#today .lead b{font-weight:400}
 
 /* История трат */
-#bh>.tot{display:grid;gap:4px;padding:4px 0 12px}
-#bh>.tot span{font-size:14px;font-weight:400;color:var(--muted)}
+#bh>.tot{display:grid;gap:4px;padding:16px 0 4px}
+#bh>.tot span{font-size:15px;font-weight:400;color:var(--muted)}
 #bh>.tot b small{font-size:.5em;font-weight:700;letter-spacing:0;margin-right:2px}
 #bh>.tot b{font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1}
-#bh .hm{border-top:1px solid var(--line)}
-#bh .hmh{padding:14px 0;font-size:17px;font-weight:800;letter-spacing:-.01em}
-#bh .hmh b{font-weight:800}
+#bh .hm{border-top:0}
+#bh .hmh{padding:14px 0;font-size:15px;font-weight:600}
+#bh .hmh b{font-weight:600;margin-left:auto}
+#bh .hmh::after{content:'▾';margin-left:6px;font-size:13px;font-weight:400;line-height:1;color:var(--muted);flex:none;transition:transform .15s}
 #bh .hmb>div{padding:8px 0;border-top:0}
 #bh .hmb>div:first-child{padding-top:2px}
-#bh .hmb b{font-weight:500}
+#bh .hmb b{font-weight:400}
 
 /* Чекбоксы списков */
 #shop input[type=checkbox],#wish input[type=checkbox]{-webkit-appearance:none;appearance:none;width:24px;height:24px;border:2px solid var(--ink);border-radius:8px;background:var(--surface);display:grid;place-content:center;cursor:pointer}
@@ -260,10 +262,28 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 .panel .addf input[type=text]{border:0;border-bottom:2px solid var(--line);border-radius:0;background:none;padding:10px 0;outline:none}
 .panel .addf .addr{display:flex;align-items:center;gap:8px}
 .panel .addf .addr button{margin-left:auto}
+.panel .addf .frow{display:flex;align-items:flex-end;gap:12px}
+.panel .addf .frow>input,.panel .addf .frow>.amt{flex:1;min-width:0}
+.panel .addf .frow>button{flex:none}
 .dpill{position:relative;display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:999px;background:var(--field);font-weight:600;cursor:pointer}
 .dpill::after{content:'▾';font-size:11px;color:var(--muted)}
 .dpill:focus-within{outline:2px solid var(--ink);outline-offset:2px}
 #bf .dpill #bd{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;opacity:0;cursor:pointer}
+/* Шкала отступов: 4 · 8 · 12 · 16 · 24. Внутри блока между элементами — 16; цифра → подпись — 8;
+   инфографика → список — 16 + 16; строки списков — 8 по вертикали; поля формы друг под другом — 12; поле → кнопка в строке — 24 */
+:root{--s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px}
+.panel{gap:var(--s4)}
+#today{gap:var(--s4)}
+#today .hgrid{row-gap:var(--s2);margin-bottom:var(--s4)}
+#bl{gap:var(--s2)}
+.panel .addf{gap:var(--s3);grid-template-columns:minmax(0,1fr)}
+.panel .addf .frow>input{width:100%}
+.panel .addf .frow{gap:var(--s5)}
+#bh .hmb>div{padding:var(--s2) 0}
+#bh .hmb>div:first-child{padding-top:0}
+#bh .hmh{padding:var(--s3) 0}
+#bh>.tot{padding:var(--s4) 0 0;gap:var(--s1)}
+.wi,.si{padding:var(--s2) 0}
 /* Кнопки удаления не наследуют заливку пилюль */
 :root .panel button.x,:root .panel button.hx,:root .panel button.wx{background:none;color:var(--muted);padding:0 0 0 12px;border-radius:0}
 </style>
@@ -283,14 +303,14 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 
   <section class="panel bud" id="shop" data-tab="day" data-closed>
     <h2 style="margin:0">Список покупок</h2>
-    <form id="sf" class="addf"><input type="text" id="sn" placeholder="что купить" maxlength="60" aria-label="Что купить"><div class="addr"><button type="submit">Добавить</button></div></form>
+    <form id="sf" class="addf"><div class="frow"><input type="text" id="sn" placeholder="что купить" maxlength="60" aria-label="Что купить"><button type="submit">Добавить</button></div></form>
     <div id="sl"></div>
     <div class="err" id="serr"></div>
   </section>
 
   <section class="panel bud" id="wish" data-tab="day" data-closed>
     <h2 style="margin:0">Хотелки</h2>
-    <form id="wf" class="addf"><input type="text" id="wn" placeholder="хотелка" aria-label="Название"><label class="amt"><span>€</span><input type="number" id="wp" step="1" inputmode="decimal" placeholder="цена" aria-label="Цена, €"></label><div class="addr"><button type="submit">Добавить</button></div></form>
+    <form id="wf" class="addf"><input type="text" id="wn" placeholder="хотелка" aria-label="Название"><div class="frow"><label class="amt"><span>€</span><input type="number" id="wp" step="1" inputmode="decimal" placeholder="цена" aria-label="Цена, €"></label><button type="submit">Добавить</button></div></form>
     <div class="err" id="wsum"></div>
     <div id="wl"></div>
   </section>
@@ -403,8 +423,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   // Сколько ушло за день по истории трат: записи, покупки для переезда, оплаченные платежи
   function dayOut(){
     const big={}, out={}, put=(k,v)=>{ out[k]=(out[k]||0)+v; };
-    document.querySelectorAll('#dt tr.paid:not([hidden])').forEach(tr=>{ const d=tr.dataset.d; if(!d||!tr.cells[2]) return; (big[d]=big[d]||[]).push([tr.cells[1].textContent,tr.cells[2].textContent]); });
-    for(const k in spend) put(k,spend[k]); for(const k in MOVE) put(k,MOVE[k]); for(const k in big) big[k].forEach(x=>put(k,money(x[1])));
+    document.querySelectorAll('#dt tr.paid:not([hidden])').forEach(tr=>{ const d=tr.dataset.d; if(!d||!tr.cells[2]) return; const i=tr.querySelector('input[data-p]');
+      (big[d]=big[d]||[]).push([tr.cells[1].textContent,tr.cells[2].textContent,i?'p:'+i.dataset.p:'c:'+tr.dataset.c]); });
+    for(const k in spend) put(k,spend[k]); for(const k in MOVE) if(!gone['move-'+k]) put(k,MOVE[k]); for(const k in big) big[k].forEach(x=>put(k,money(x[1])));
     return {out,big};
   }
   const ds=e=>String(e.d).padStart(2,'0')+'.'+String(e.m).padStart(2,'0');
@@ -521,24 +542,24 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       '';
     // Темп расходов периода к норме на сегодня: выше нормы — «высокие», меньше 80 % нормы — «низкие», иначе «норм»
     const pace=over?['t-warn','высокие']:r2s<norm*.8?['t-ok','низкие']:['t-grey','норм'];
-    bl.innerHTML+=lead('Расходы до '+dm(pe),'<span class="tag '+pace[0]+'">'+pace[1]+'</span>');
+    bl.innerHTML=lead('Расходы с '+dm(ps)+' по '+dm(pe),'<span class="tag '+pace[0]+'">'+pace[1]+'</span>')+bl.innerHTML;
     const {out,big}=dayOut();
-    const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(MOVE),Object.keys(big)))].sort();
+    const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(MOVE).filter(k=>!gone['move-'+k]),Object.keys(big)))].sort();
     const line=(l,v,c)=>'<div><span>'+l+'</span><b'+(c?' class="'+c+'"':'')+'>'+v+'</b></div>';
     // От старых к новым; месяц — сворачиваемая группа с итогом, прошедшие месяцы по умолчанию свёрнуты
     const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const r2=v=>Math.round(v*100)/100, curM=iso(today).slice(0,7), groups={}; let all=0;
     hk.forEach(k=>{ const d=k.split('-'), dt=d[2]+'.'+d[1], g=groups[k.slice(0,7)]=groups[k.slice(0,7)]||{sum:0,html:''};
       const its=items[k]||[], rest=r2((spend[k]||0)-its.reduce((s,i)=>s+i.a,0));
-      const one=(a,n,ix)=>'<div><span><i class="hd">'+dt+'</i>'+(n?esc(n):'')+'</span><b>'+(a<0?'+':'−')+eur(Math.abs(r2(a)))+'<button type="button" class="hx" data-day="'+k+'" data-ix="'+ix+'" aria-label="Удалить запись">×</button></b></div>';
+      const one=(a,n,ix)=>'<div><span><i class="hd">'+dt+'</i>'+(n?esc(n):'')+'</span><b>'+(a<0?'+':'')+eur(Math.abs(r2(a)))+'<button type="button" class="hx" data-day="'+k+'" data-ix="'+ix+'" aria-label="Удалить запись">×</button></b></div>';
       g.sum+=out[k]||0; all+=out[k]||0;
       g.html+=(spend[k]>0||its.length?(rest>0?one(rest,'','rest'):'')+its.map((i,ix)=>one(i.a,i.n,ix)).join(''):'')+
-        (MOVE[k]?'<div><span><i class="hd">'+dt+'</i>покупки для переезда</span><b>−'+eur(MOVE[k])+'</b></div>':'')+(big[k]||[]).map(x=>'<div><span><i class="hd">'+dt+'</i>'+esc(x[0])+'</span><b>−'+esc(x[1])+'</b></div>').join('');
+        (MOVE[k]&&!gone['move-'+k]?'<div><span><i class="hd">'+dt+'</i>покупки для переезда</span><b>'+eur(MOVE[k])+'<button type="button" class="hx" data-move="'+k+'" aria-label="Удалить запись">×</button></b></div>':'')+(big[k]||[]).map(x=>'<div><span><i class="hd">'+dt+'</i>'+esc(x[0])+'</span><b>'+esc(x[1])+'<button type="button" class="hx" data-pay="'+x[2]+'" aria-label="Убрать из истории">×</button></b></div>').join('');
     });
     const mName=mk=>cap(MON[+mk.slice(5)-1])+(+mk.slice(0,4)===today.getFullYear()?'':' '+mk.slice(0,4));
-    document.getElementById('bh').innerHTML=hk.length?'<div class="tot"><span>Итого за всё время</span><b><small>€</small>'+eur(r2(all)).slice(1)+'</b></div>'+
+    document.getElementById('bh').innerHTML=hk.length?
       Object.keys(groups).map(mk=>{ const open=mk in mOpen?mOpen[mk]:mk>=curM;
-        return '<div class="hm'+(open?'':' closed')+'"><button type="button" class="hmh" data-m="'+mk+'" aria-expanded="'+open+'"><span>'+mName(mk)+'</span><b>'+eur(r2(groups[mk].sum))+'</b></button><div class="hmb">'+groups[mk].html+'</div></div>'; }).join('')
+        return '<div class="hm'+(open?'':' closed')+'"><button type="button" class="hmh" data-m="'+mk+'" aria-expanded="'+open+'"><span>'+mName(mk)+'</span><b>'+eur(r2(groups[mk].sum))+'</b></button><div class="hmb">'+groups[mk].html+'</div></div>'; }).join('')+'<div class="tot"><span>Итого за всё время</span><b><small>€</small>'+eur(r2(all)).slice(1)+'</b></div>'
       :'<div class="emp">Записей пока нет</div>';
     if(planOk) renderPlan();
     renderWishes();
@@ -580,6 +601,15 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const h=e.target.closest('.hmh');
     if(h){ const open=h.parentNode.classList.toggle('closed')===false; mOpen[h.dataset.m]=open; h.setAttribute('aria-expanded',String(open)); return; }
     const b=e.target.closest('.hx'); if(!b) return;
+    if(b.dataset.move||b.dataset.pay){ if(!db) return;
+      // Покупки переезда — скрыть строку; оплаченный платёж — снять отметку «оплачено», строка уйдёт из истории
+      if(b.dataset.move){ if(!confirm('Удалить «покупки для переезда» за '+b.dataset.move.split('-').reverse().slice(0,2).join('.')+'?')) return;
+        try{ await db.doc('paid/move-'+b.dataset.move).set({del:true}); }catch(_){ be.textContent='Не удалилось, попробуй ещё раз.'; } return; }
+      if(!confirm('Убрать платёж из истории? Он станет неоплаченным.')) return;
+      const [t,id]=b.dataset.pay.split(':');
+      try{ if(t==='p'){ const i=document.querySelector('#dt input[data-p="'+id+'"]'); i.checked=false; i.closest('tr').classList.remove('paid'); await db.doc('paid/'+id).set({done:false}); }
+        else await db.doc('debts/'+id).update({done:false}); renderNext(); renderBud(); }
+      catch(_){ be.textContent='Не сохранилось, попробуй ещё раз.'; } return; }
     const day=b.dataset.day, its=(items[day]||[]).slice(); let tot=spend[day]||0;
     if(b.dataset.ix==='rest'){ tot=its.reduce((s,i)=>s+i.a,0); }
     else { const i=its.splice(Number(b.dataset.ix),1)[0]; if(!i) return; tot-=i.a; }
