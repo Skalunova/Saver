@@ -10,22 +10,22 @@
 :root{
   --bg:#F4F1EC; --surface:#FFFFFF; --field:#F1ECE5; --line:#E6E0D8; --dots:#CFC7BC; --ink:#15120F; --muted:#6F675E;
   --accent:#15120F; --save:#1E7A47; --pay:#B4441B;
-  --hero:#AED9F4; --hero-ink:#0E1C2B; --hero-track:#FFFFFF;
+  --hero:#AED9F4; --hero-ink:#0E1C2B; --hero-track:#FFFFFF; --hero-fill:#0E1C2B; --hero-tick:#B4441B; --hero-chip:rgba(255,255,255,.55);
   --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#ECE6DE; --t-ink:#15120F;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0C0C0D; --surface:#19191B; --field:#242427; --line:#2C2C30; --dots:#3C3C42; --ink:#F5F5F3; --muted:#9C9CA3;
     --accent:#F5F5F3; --save:#6FD69A; --pay:#FF8F6B;
-    --hero:#AED9F4; --hero-ink:#0E1C2B; --hero-track:#FFFFFF;
-    --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#2E2E33; --t-ink:#15120F; color-scheme:dark;
+    --hero:#1A2446; --hero-ink:#F2F4FB; --hero-track:#2B3866; --hero-fill:#FF8BB8; --hero-tick:#FFFFFF; --hero-chip:rgba(255,255,255,.12);
+    --t-green:#62D38A; --t-red:#FF8BB8; --t-grey:#2E2E33; --t-ink:#15120F; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0C0C0D; --surface:#19191B; --field:#242427; --line:#2C2C30; --dots:#3C3C42; --ink:#F5F5F3; --muted:#9C9CA3;
     --accent:#F5F5F3; --save:#6FD69A; --pay:#FF8F6B;
-    --hero:#AED9F4; --hero-ink:#0E1C2B; --hero-track:#FFFFFF;
-    --t-green:#62D38A; --t-red:#FFB49A; --t-grey:#2E2E33; --t-ink:#15120F; color-scheme:dark;
+    --hero:#1A2446; --hero-ink:#F2F4FB; --hero-track:#2B3866; --hero-fill:#FF8BB8; --hero-tick:#FFFFFF; --hero-chip:rgba(255,255,255,.12);
+    --t-green:#62D38A; --t-red:#FF8BB8; --t-grey:#2E2E33; --t-ink:#15120F; color-scheme:dark;
 }
 /* Типографика: 15 — текст и заголовки блоков, 13 — подписи и вторичное, 24 — ключевые суммы, 20 — заголовок страницы.
    Начертания: 400 и 600. Цвет: ink — основное, muted — вторичное, save/pay — только статус суммы, accent — только управление.
@@ -195,16 +195,20 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 
 /* Прогресс-бар: заполнение — потрачено, засечка — норма на сегодня */
 .bar{position:relative;height:16px;border-radius:999px;background:var(--hero-track);overflow:hidden}
-.bar i{position:absolute;inset:0 auto 0 0;background:var(--hero-ink);border-radius:999px}
-.bar s{position:absolute;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--pay)}
+.bar i{position:absolute;inset:0 auto 0 0;background:var(--hero-fill);border-radius:999px}
+.bar s{position:absolute;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--hero-tick)}
 
 /* Главный блок «Траты на жизнь» */
 #today{background:var(--hero);color:var(--hero-ink);gap:16px}
 #today .lbl{color:var(--hero-ink);opacity:.75}
 #today .lead i{border-color:currentColor;opacity:.3}
-#today .tg::after{background:rgba(255,255,255,.55);color:var(--hero-ink)}
+#today .tg::after{background:var(--hero-chip);color:var(--hero-ink)}
 #bt,#bm{display:grid;gap:10px}
-#bm{padding-top:4px}
+#bm{border-top:1px solid currentColor;border-color:color-mix(in srgb,var(--hero-ink) 18%,transparent);padding-top:16px}
+#bm .prow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:600}
+#bm .pfoot{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+#bm .pfoot b{font-weight:700}
+#bm .pfoot span:last-child{opacity:.75}
 
 /* История трат */
 #bh>.tot{display:grid;gap:4px;padding:4px 0 12px}
@@ -229,10 +233,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #bf.addf{display:grid;gap:12px}
 #bf .amt{display:flex;align-items:baseline;gap:6px;border-bottom:2px solid var(--line);cursor:text}
 #bf .amt:focus-within,#bf #bn:focus{border-color:var(--ink)}
-#bf #ba{flex:1;width:100%;min-width:0;border:0;border-radius:0;background:none;padding:2px 0 6px;font-size:40px;font-weight:800;letter-spacing:-.04em;color:var(--ink);outline:none;-moz-appearance:textfield}
+#bf #ba{flex:1;width:100%;min-width:0;border:0;border-radius:0;background:none;padding:10px 0;color:var(--ink);outline:none;-moz-appearance:textfield}
 #bf #ba::-webkit-outer-spin-button,#bf #ba::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-#bf #ba::placeholder{color:var(--dots)}
-#bf .amt span{font-size:22px;font-weight:700;color:var(--muted)}
+#bf .amt span{color:var(--muted)}
 #bf #bn{border:0;border-bottom:2px solid var(--line);border-radius:0;background:none;padding:10px 0;outline:none}
 #bf .addr{display:flex;align-items:center;gap:8px}
 #bf .addr button{margin-left:auto}
@@ -255,7 +258,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 
   <section class="panel next bud" id="today" data-tab="day" data-closed aria-live="polite"></section>
 
-  <section class="panel bud" id="hist" data-tab="day" data-closed><h2 style="margin:0">История трат</h2><form id="bf" class="addf"><label class="amt"><input type="number" id="ba" step="0.01" inputmode="decimal" placeholder="0" title="Ошиблась — добавь сумму с минусом" aria-label="Потратила, €"><span>€</span></label><input type="text" id="bn" placeholder="на что" maxlength="30" aria-label="На что"><div class="addr"><label class="dpill"><span id="bdl">сегодня</span><input type="date" id="bd" aria-label="День траты"></label><button type="submit">Добавить</button></div></form><div class="err" id="be"></div><div id="bh"></div></section>
+  <section class="panel bud" id="hist" data-tab="day" data-closed><h2 style="margin:0">История трат</h2><form id="bf" class="addf"><label class="amt"><input type="number" id="ba" step="0.01" inputmode="decimal" placeholder="сумма" title="Ошиблась — добавь сумму с минусом" aria-label="Потратила, €"><span>€</span></label><input type="text" id="bn" placeholder="на что" maxlength="30" aria-label="На что"><div class="addr"><label class="dpill"><span id="bdl">сегодня</span><input type="date" id="bd" aria-label="День траты"></label><span class="sub" id="bdv"></span><button type="submit">Добавить</button></div></form><div class="err" id="be"></div><div id="bh"></div></section>
 
   <section class="panel bud" id="shop" data-tab="day" data-closed>
     <h2 style="margin:0">Список покупок</h2>
@@ -473,10 +476,14 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     // Крупное число: цифры гротеском, единица мелко рядом
     const num=(v,u)=>'<span class="n">'+Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0')+'</span><span class="u">'+u+'</span>';
     const lead=(l,v)=>'<div class="lead"><span>'+l+'</span><i></i><b>'+v+'</b></div>';
-    if(bal>=MIN){ bt.innerHTML='<div class="lbl">Можно сегодня, '+dm(today)+'</div><div class="big-n">'+num(Math.floor(bal),'€')+'</div>'; }
+    // Группа «Сегодня»: одна главная цифра и её пояснения
+    const tv=Math.round((spend[iso(today)]||0)*100)/100;
+    if(bal>=MIN){ bt.innerHTML='<div class="lbl">Можно сегодня</div><div class="big-n">'+num(Math.floor(bal),'€')+'</div>'+lead('Потрачено сегодня',eur(tv)); }
     else { const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal);
-      bt.innerHTML='<div class="lbl">Можно сегодня, '+dm(today)+'</div><div class="big-n">'+num(0,'€')+'</div>'+lead('Снова можно с '+dm(back),eur(rest)); }
+      bt.innerHTML='<div class="lbl">Можно сегодня</div><div class="big-n">'+num(0,'€')+'</div>'+lead('Потрачено сегодня',eur(tv))+lead('Снова можно с '+dm(back),eur(rest)); }
     const dv=spend[bd.value]||0, dd=bd.value.split('-');
+    // Сумма за выбранный в форме день — рядом с выбором даты
+    document.getElementById('bdv').textContent=bd.value===iso(today)?'':'за день '+eur(Math.round(dv*100)/100);
     // Период между поступлениями: 13-е → 27-е, 28-е → 12-е; первый период начинается 22.09
     const Y=today.getFullYear(), M=today.getMonth(), D=today.getDate();
     let ps=D>=28?new Date(Y,M,28):D>=13?new Date(Y,M,13):new Date(Y,M-1,28);
@@ -486,10 +493,10 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     let pSpent=0; for(const k in spend){ if(k>=iso(ps)&&k<=iso(pe)) pSpent+=spend[k]; }
     const norm=Math.min(pd,Math.max(0,Math.round((today-ps)/864e5)+1))*L, r2s=Math.round(pSpent*100)/100;
     const lim=pd*L, over=r2s>norm;
-    bm.innerHTML='<div class="lbl">Потрачено '+dm(ps)+'–'+dm(pe)+' <span class="tag '+(over?'t-red':'t-green')+'">'+(over?'выше нормы':'в норме')+'</span></div>'+
-      '<div class="mid-n">'+num(r2s,'/'+Math.round(lim).toLocaleString('ru-RU').replace(/\s/g,'\u00a0')+' €')+'</div>'+
+    // Группа «Период»: заголовок со статусом, полоса, подписи под полосой
+    bm.innerHTML='<div class="prow"><span>Период '+dm(ps)+'–'+dm(pe)+'</span><span class="tag '+(over?'t-red':'t-green')+'">'+(over?'выше нормы':'в норме')+'</span></div>'+
       '<div class="bar" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(lim)+', норма на сегодня '+eur(norm)+'"><i style="width:'+Math.min(100,r2s/lim*100)+'%"></i><s style="left:'+Math.min(100,norm/lim*100)+'%"></s></div>'+
-      lead(bd.value===iso(today)?'Расходы за сегодня':'Расходы за '+dd[2]+'.'+dd[1],eur(Math.round(dv*100)/100));
+      '<div class="pfoot"><span><b>'+eur(r2s)+'</b> потрачено</span><span>из '+eur(lim)+'</span></div>';
     const {out,big}=dayOut();
     const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(MOVE),Object.keys(big)))].sort();
     const line=(l,v,c)=>'<div><span>'+l+'</span><b'+(c?' class="'+c+'"':'')+'>'+v+'</b></div>';
