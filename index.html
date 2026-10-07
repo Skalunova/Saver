@@ -111,6 +111,7 @@ main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data
 #bh .hm.closed .hmb{display:none}
 #bh .hmh{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;background:none;border:0;border-radius:0;padding:8px 0;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
 #bh .emp{color:var(--muted)}
+#bh .hd{font-style:normal;color:var(--muted);display:inline-block;min-width:3.4em}
 
 /* График по периодам */
 .per{border-top:1px solid var(--line)}
@@ -186,7 +187,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 
 /* Точечный лидер: «название ……… сумма» */
 .lead{display:flex;align-items:baseline;gap:8px}
-.lead i{flex:1;border-bottom:2px dotted var(--dots);min-width:16px;transform:translateY(-4px)}
+.lead i{flex:1;min-width:16px}
 .lead b{font-weight:600;white-space:nowrap}
 
 /* Шильдик */
@@ -217,9 +218,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 .gauge .gnum .u{font-size:18px;font-weight:700}
 /* Точная подгонка по макету Полины: подписи ниже на 10, «можно» выше на 23, сумма в подкове выше на 13 */
 #bt .lbl,#bm .lbl{position:relative;top:10px}
-#bt .big-n{position:relative;top:-23px}
-.gauge .gnum{transform:translateY(-13px)}
-.gauge{position:relative;width:150px;max-width:100%;padding-bottom:14px}
+#bt .big-n{position:relative;top:var(--dy0,8.5px)}
+.gauge .gnum{transform:translate(3px,var(--dy1,4px))}
+.gauge{position:relative;width:150px;max-width:100%;padding-bottom:0}
 .gauge svg{display:block;width:100%;height:auto;overflow:visible}
 .gauge path{fill:none;stroke-width:11;stroke-linecap:round}
 .gauge .gt{stroke:var(--hero-track)}
@@ -230,6 +231,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 /* История трат */
 #bh>.tot{display:grid;gap:4px;padding:4px 0 12px}
 #bh>.tot span{font-size:14px;font-weight:400;color:var(--muted)}
+#bh>.tot b small{font-size:.5em;font-weight:700;letter-spacing:0;margin-right:2px}
 #bh>.tot b{font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1}
 #bh .hm{border-top:1px solid var(--line)}
 #bh .hmh{padding:14px 0;font-size:17px;font-weight:800;letter-spacing:-.01em}
@@ -245,17 +247,19 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #wish input[type=checkbox]:disabled{opacity:.3;cursor:default}
 .wi,.si{padding:10px 0;border-top:0}
 .wi .pr{color:var(--ink)}
+.wi .pr.t-ok{color:var(--t-ok-ink)}
 .wi.done .pr{opacity:.6}
 /* Форма траты */
-#bf.addf{display:grid;gap:12px}
-#bf .amt{display:flex;align-items:baseline;gap:6px;border-bottom:2px solid var(--line);cursor:text}
-#bf .amt:focus-within,#bf #bn:focus{border-color:var(--ink)}
-#bf #ba{flex:1;width:100%;min-width:0;border:0;border-radius:0;background:none;padding:10px 0;color:var(--ink);outline:none;-moz-appearance:textfield}
-#bf #ba::-webkit-outer-spin-button,#bf #ba::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-#bf .amt span{color:var(--muted)}
-#bf #bn{border:0;border-bottom:2px solid var(--line);border-radius:0;background:none;padding:10px 0;outline:none}
-#bf .addr{display:flex;align-items:center;gap:8px}
-#bf .addr button{margin-left:auto}
+/* Формы добавления: поля с подчёркиванием без заливки, кнопка справа (История трат, Список покупок, Хотелки) */
+.panel .addf{display:grid;gap:12px}
+.panel .addf .amt{display:flex;align-items:baseline;gap:6px;border-bottom:2px solid var(--line);cursor:text}
+.panel .addf .amt:focus-within,.panel .addf input[type=text]:focus{border-color:var(--ink)}
+.panel .addf .amt input{flex:1;width:100%;min-width:0;border:0;border-radius:0;background:none;padding:10px 0;color:var(--ink);outline:none;-moz-appearance:textfield}
+.panel .addf .amt input::-webkit-outer-spin-button,.panel .addf .amt input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.panel .addf .amt span{color:var(--muted)}
+.panel .addf input[type=text]{border:0;border-bottom:2px solid var(--line);border-radius:0;background:none;padding:10px 0;outline:none}
+.panel .addf .addr{display:flex;align-items:center;gap:8px}
+.panel .addf .addr button{margin-left:auto}
 .dpill{position:relative;display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:999px;background:var(--field);font-weight:600;cursor:pointer}
 .dpill::after{content:'▾';font-size:11px;color:var(--muted)}
 .dpill:focus-within{outline:2px solid var(--ink);outline-offset:2px}
@@ -279,16 +283,16 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 
   <section class="panel bud" id="shop" data-tab="day" data-closed>
     <h2 style="margin:0">Список покупок</h2>
-    <form id="sf"><input type="text" id="sn" placeholder="что купить" maxlength="60" aria-label="Что купить" style="flex:1 1 160px"><button type="submit">Добавить</button></form>
+    <form id="sf" class="addf"><input type="text" id="sn" placeholder="что купить" maxlength="60" aria-label="Что купить"><div class="addr"><button type="submit">Добавить</button></div></form>
     <div id="sl"></div>
     <div class="err" id="serr"></div>
   </section>
 
   <section class="panel bud" id="wish" data-tab="day" data-closed>
     <h2 style="margin:0">Хотелки</h2>
+    <form id="wf" class="addf"><input type="text" id="wn" placeholder="хотелка" aria-label="Название"><label class="amt"><span>€</span><input type="number" id="wp" step="1" inputmode="decimal" placeholder="цена" aria-label="Цена, €"></label><div class="addr"><button type="submit">Добавить</button></div></form>
     <div class="err" id="wsum"></div>
     <div id="wl"></div>
-    <form id="wf"><input type="text" id="wn" placeholder="хотелка" aria-label="Название"><input type="number" id="wp" step="1" inputmode="decimal" placeholder="€" aria-label="Цена, €"><button type="submit">Добавить</button></form>
   </section>
 
   <section class="panel next" id="next" data-tab="long" data-closed><h2>Детализация периода</h2><div id="nextb"></div></section>
@@ -360,7 +364,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 </script>
 <script>
 (function(){
-  const L=23, eur=n=>'€'+n.toLocaleString('ru-RU').replace(/\s/g,' ');
+  const L=23, eur=n=>'€'+n.toLocaleString('ru-RU').replace(/\s/g,' ').replace(',','.');
   const dim=(y,m)=>new Date(y,m,0).getDate();
   const MON=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
   const TAGS={'2027-2':'подача ВНЖ','2027-3':'карта ВНЖ','2027-6':'ВНЖ действует','2027-9':'последний блок-счёт','2028-2':'продление','2028-9':'конец магистратуры'};
@@ -526,13 +530,13 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const r2=v=>Math.round(v*100)/100, curM=iso(today).slice(0,7), groups={}; let all=0;
     hk.forEach(k=>{ const d=k.split('-'), dt=d[2]+'.'+d[1], g=groups[k.slice(0,7)]=groups[k.slice(0,7)]||{sum:0,html:''};
       const its=items[k]||[], rest=r2((spend[k]||0)-its.reduce((s,i)=>s+i.a,0));
-      const one=(a,n,ix)=>'<div><span>'+dt+(n?' · '+esc(n):'')+'</span><b>'+(a<0?'+':'−')+eur(Math.abs(r2(a)))+'<button type="button" class="hx" data-day="'+k+'" data-ix="'+ix+'" aria-label="Удалить запись">×</button></b></div>';
+      const one=(a,n,ix)=>'<div><span><i class="hd">'+dt+'</i>'+(n?esc(n):'')+'</span><b>'+(a<0?'+':'−')+eur(Math.abs(r2(a)))+'<button type="button" class="hx" data-day="'+k+'" data-ix="'+ix+'" aria-label="Удалить запись">×</button></b></div>';
       g.sum+=out[k]||0; all+=out[k]||0;
       g.html+=(spend[k]>0||its.length?(rest>0?one(rest,'','rest'):'')+its.map((i,ix)=>one(i.a,i.n,ix)).join(''):'')+
-        (MOVE[k]?'<div><span>'+dt+' · покупки для переезда</span><b>−'+eur(MOVE[k])+'</b></div>':'')+(big[k]||[]).map(x=>'<div><span>'+dt+' · '+esc(x[0])+'</span><b>−'+esc(x[1])+'</b></div>').join('');
+        (MOVE[k]?'<div><span><i class="hd">'+dt+'</i>покупки для переезда</span><b>−'+eur(MOVE[k])+'</b></div>':'')+(big[k]||[]).map(x=>'<div><span><i class="hd">'+dt+'</i>'+esc(x[0])+'</span><b>−'+esc(x[1])+'</b></div>').join('');
     });
     const mName=mk=>cap(MON[+mk.slice(5)-1])+(+mk.slice(0,4)===today.getFullYear()?'':' '+mk.slice(0,4));
-    document.getElementById('bh').innerHTML=hk.length?'<div class="tot"><span>Итого за всё время</span><b>'+eur(r2(all))+'</b></div>'+
+    document.getElementById('bh').innerHTML=hk.length?'<div class="tot"><span>Итого за всё время</span><b><small>€</small>'+eur(r2(all)).slice(1)+'</b></div>'+
       Object.keys(groups).map(mk=>{ const open=mk in mOpen?mOpen[mk]:mk>=curM;
         return '<div class="hm'+(open?'':' closed')+'"><button type="button" class="hmh" data-m="'+mk+'" aria-expanded="'+open+'"><span>'+mName(mk)+'</span><b>'+eur(r2(groups[mk].sum))+'</b></button><div class="hmb">'+groups[mk].html+'</div></div>'; }).join('')
       :'<div class="emp">Записей пока нет</div>';
