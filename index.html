@@ -384,7 +384,7 @@ section.collapsed>h2{margin:0!important}
     let pSpent=0; for(const k in spend){ if(k>=iso(ps)&&k<=iso(pe)) pSpent+=spend[k]; }
     const tile=(l,v)=>'<div><div class="lbl">'+l+'</div><div class="tm">'+v+'</div></div>';
     const norm=Math.min(pd,Math.max(0,Math.round((today-ps)/864e5)+1))*L, r2s=Math.round(pSpent*100)/100;
-    bm.innerHTML=tile(bd.value===iso(today)?'Расходы за сегодня':'Расходы за '+dd[2]+'.'+dd[1],eur(dv))+'<div><div class="lbl">Потрачено '+dm(ps)+'–'+dm(pe)+'</div><div class="tm '+(r2s>norm?'neg':'pos')+'">'+eur(r2s)+'<div class="sm">из '+eur(pd*L)+' · норма на сегодня '+eur(norm)+'</div></div></div>';
+    bm.innerHTML=tile(bd.value===iso(today)?'Расходы за сегодня':'Расходы за '+dd[2]+'.'+dd[1],eur(dv))+'<div><div class="lbl">Потрачено '+dm(ps)+'–'+dm(pe)+'</div><div class="tm '+(r2s>norm?'neg':'pos')+'">'+eur(r2s)+'<div class="sm">из '+eur(pd*L)+'</div></div></div>';
     const {out,big}=dayOut();
     const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(big)))].sort();
     // От старых к новым; месяц — сворачиваемая группа с итогом, прошедшие месяцы по умолчанию свёрнуты
