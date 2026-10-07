@@ -109,6 +109,12 @@ h2{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mute
 #bh>div:first-child{border-top:0}
 #bh{max-height:260px;overflow:auto}
 #bh b{font-weight:600;color:var(--pay);white-space:nowrap}
+#bh .tot{font-weight:600}
+#bh .tot b{color:var(--ink)}
+.row .pb{font-size:12.5px;line-height:1.35;margin-top:2px}
+.row .pb .nw{white-space:nowrap}
+.row .pb .pos{color:var(--save)}
+.row .pb .neg{color:var(--pay)}
 #bh .hx{background:none;border:0;color:var(--muted);font:inherit;font-size:17px;font-weight:400;line-height:1;padding:0 0 0 10px;cursor:pointer}
 #bhl{margin-bottom:14px}
 #bhl>div,#bh>div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-top:1px solid var(--line);font-size:13.5px}
@@ -286,6 +292,13 @@ section.collapsed>h2{margin:0!important}
   const today=new Date(); today.setHours(0,0,0,0);
   const DEF={start:iso(today),limit:20,horizon:24};
   let cfg=Object.assign({},DEF), incs=[], recs=[], debts=[], extras=[], ev=[], next=null;
+  // Сколько ушло за день по истории трат: записи и оплаченные платежи
+  function dayOut(){
+    const big={}, out={}, put=(k,v)=>{ out[k]=(out[k]||0)+v; };
+    debts.forEach(x=>{ if(x.done){ (big[x.date]=big[x.date]||[]).push([x.name,eur(x.amount)]); put(x.date,x.amount); } });
+    for(const k in spend) put(k,spend[k]);
+    return {out,big};
+  }
   let done={}; try{done=JSON.parse(localStorage.getItem('saver-done')||'{}')}catch(_){}
   const saveDone=()=>{try{localStorage.setItem('saver-done',JSON.stringify(done))}catch(_){}};
   const key=e=>e.y+'-'+e.m+'-'+e.d+'-'+(e.xid||e.iid);
@@ -389,13 +402,19 @@ section.collapsed>h2{margin:0!important}
     let pSpent=0; for(const k in spend){ if(k>=iso(ps)&&k<=iso(pe)) pSpent+=spend[k]; }
     const tile=(l,v)=>'<div><div class="lbl">'+l+'</div><div class="tm">'+v+'</div></div>';
     bm.innerHTML=tile(bd.value===iso(today)?'Расходы за сегодня':'Расходы за '+dd[2]+'.'+dd[1],eur(dv))+tile('Лимит на '+dm(ps)+'–'+dm(pe),eur(pd*L)+'<div class="sm">потрачено '+eur(pSpent)+'</div>');
-    const big={}; debts.forEach(x=>{ if(x.done) (big[x.date]=big[x.date]||[]).push([x.name,eur(x.amount)]); });
+    const {out,big}=dayOut();
     const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(big)))].sort().reverse();
+    // Итого после каждого месяца и за всё время
+    const tot=(l,v)=>'<div class="tot"><span>'+l+'</span><b>'+eur(v)+'</b></div>';
+    const mName=mk=>MON[+mk.slice(5)-1]+(+mk.slice(0,4)===today.getFullYear()?'':' '+mk.slice(0,4));
+    let mon='', mSum=0, all=0;
     document.getElementById('bh').innerHTML=hk.length?hk.map(k=>{const d=k.split('-'), dt=d[2]+'.'+d[1]+'.'+d[0].slice(2);
+      let head=''; if(k.slice(0,7)!==mon){ if(mon) head=tot('Итого за '+mName(mon),mSum); mon=k.slice(0,7); mSum=0; }
+      mSum+=out[k]||0; all+=out[k]||0;
       const its=items[k]||[], rest=Math.round(((spend[k]||0)-its.reduce((s,i)=>s+i.a,0))*100)/100;
       const one=(a,n,ix)=>'<div><span>'+dt+(n?' · '+esc(n):'')+'</span><b>'+(a<0?'+':'−')+eur(Math.abs(a))+'<button type="button" class="hx" data-day="'+k+'" data-ix="'+ix+'" aria-label="Удалить запись">×</button></b></div>';
-      return (spend[k]>0||its.length?(rest>0?one(rest,'','rest'):'')+its.map((i,ix)=>one(i.a,i.n,ix)).join(''):'')+
-        (big[k]||[]).map(x=>'<div><span>'+dt+' · '+esc(x[0])+'</span><b>−'+esc(x[1])+'</b></div>').join('');}).join(''):'<div class="emp">Записей пока нет</div>';
+      return head+(spend[k]>0||its.length?(rest>0?one(rest,'','rest'):'')+its.map((i,ix)=>one(i.a,i.n,ix)).join(''):'')+
+        (big[k]||[]).map(x=>'<div><span>'+dt+' · '+esc(x[0])+'</span><b>−'+esc(x[1])+'</b></div>').join('');}).join('')+tot('Итого за '+mName(mon),mSum)+tot('Итого за всё время',all):'<div class="emp">Записей пока нет</div>';
     renderWishes();
   }
   const wl=document.getElementById('wl'), wsum=document.getElementById('wsum');
@@ -449,7 +468,12 @@ section.collapsed>h2{margin:0!important}
   function renderPlan(){
     if(!ev.length){ planb.innerHTML='<p class="sub" style="margin:0">График появится, когда добавишь поступления.</p>'; return; }
     let cur='', html='';
-    ev.forEach(e=>{
+    // Период строки — до следующей даты в графике; траты до первой даты относятся к первому периоду
+    const {out}=dayOut(), ks=Object.keys(out), dates=[...new Set(ev.map(e=>+e.date))], stat={};
+    dates.forEach((d,i)=>{ const from=i?iso(new Date(d)):'', to=i<dates.length-1?iso(new Date(dates[i+1])):'9999';
+      stat[d]={inc:ev.filter(e=>+e.date===d).reduce((a,e)=>a+e.inc,0),spent:ks.reduce((a,k)=>a+(k>=from&&k<to?out[k]:0),0)}; });
+    const nw=v=>'<span class="nw">'+v+'</span>';
+    ev.forEach((e,i)=>{
       const mk=e.y+'-'+e.m;
       if(mk!==cur){ if(cur)html+='</div>'; cur=mk;
         html+='<div class="month"><div class="mh"><span>'+cap(MON[e.m-1])+' '+e.y+'</span></div>'; }
@@ -457,7 +481,9 @@ section.collapsed>h2{margin:0!important}
       const payTxt=e.pays.length?' · <span class="p">'+e.pays.map(p=>esc(p[0])+' '+eur(p[1])).join(', ')+'</span>':'';
       html+='<div class="row'+(e===next?' now':'')+(done[k]?' is-done':'')+'" data-k="'+k+'">'+
         '<input type="checkbox" id="'+id+'" aria-label="Перевела '+ds(e)+'"'+(done[k]?' checked':'')+'>'+
-        '<label for="'+id+'"><div class="t">'+ds(e)+' · поступление '+eur(e.inc)+'</div><div class="w">'+esc(e.incNote)+payTxt+(e.extra?' · '+e.extra:'')+'</div></label>'+
+        '<label for="'+id+'"><div class="t">'+ds(e)+' · поступление '+eur(e.inc)+'</div><div class="w">'+esc(e.incNote)+payTxt+(e.extra?' · '+e.extra:'')+'</div>'+
+        (ev[i+1]&&+ev[i+1].date===+e.date?'':(st=>{ const b=st.inc-st.spent;
+          return '<div class="pb">'+nw((e.date>today?'поступит ':'поступило ')+eur(st.inc))+' · '+nw('потрачено '+eur(st.spent))+' · '+nw('баланс <span class="'+(b<0?'neg':'pos')+'">'+(b<0?'−':'+')+eur(Math.abs(b))+'</span>')+'</div>'; })(stat[+e.date]))+'</label>'+
         '<div class="r"><span class="s'+(e.save?'':' zero')+'">'+(e.save?'+'+eur(e.save):'—')+'</span><span class="c">'+eur(e.total)+'</span></div></div>';
     });
     planb.innerHTML=(html+'</div>').replace(/(\d) (\d)/g,'$1 $2');
@@ -609,7 +635,7 @@ section.collapsed>h2{margin:0!important}
       refresh();
     },xerr);
 
-    snap('spend',docs=>{ spend={}; items={}; docs.forEach(x=>{ const a=Number(x.amount); if(!isNaN(a)) spend[x.id]=a; if(Array.isArray(x.items)) items[x.id]=x.items.filter(i=>i&&!isNaN(Number(i.a))).map(i=>({a:Number(i.a),n:i.n?String(i.n):''})); }); renderBud(); },be);
+    snap('spend',docs=>{ spend={}; items={}; docs.forEach(x=>{ const a=Number(x.amount); if(!isNaN(a)) spend[x.id]=a; if(Array.isArray(x.items)) items[x.id]=x.items.filter(i=>i&&!isNaN(Number(i.a))).map(i=>({a:Number(i.a),n:i.n?String(i.n):''})); }); renderBud(); renderPlan(); },be);
   })();
 
   const dadd=document.getElementById('dadd'), dfm=document.getElementById('df');
