@@ -486,11 +486,11 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     // Меньше MIN € не считается деньгами: такой остаток копится до первого дня, где выходит от MIN €
     const MIN=8;
     // Крупное число: цифры гротеском, единица мелко рядом
-    const num=(v,u)=>'<span class="u">'+u+'</span><span class="n">'+Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0')+'</span>';
+    const num=(v,u)=>(u?'<span class="u">'+u+'</span>':'')+'<span class="n">'+Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0')+'</span>';
     const lead=(l,v)=>'<div class="lead"><span>'+l+'</span><i></i><b>'+v+'</b></div>';
     // Группа «Сегодня»: одна главная цифра и её пояснения
     const tv=Math.round((spend[iso(today)]||0)*100)/100;
-    bt.innerHTML='<div class="lbl">Можно сегодня</div><div class="big-n">'+num(bal>=MIN?Math.floor(bal):0,'€')+'</div>';
+    bt.innerHTML='<div class="lbl">Можно сегодня, €</div><div class="big-n">'+num(bal>=MIN?Math.floor(bal):0,'')+'</div>';
     bl.innerHTML=lead('Потрачено сегодня',eur(tv));
     if(bal<MIN){ const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal); bl.innerHTML+=lead('Снова можно с '+dm(back),eur(rest)); }
     const dv=spend[bd.value]||0, dd=bd.value.split('-');
@@ -509,7 +509,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const pct=Math.min(100,r2s/lim*100), arc='M12 70 A58 58 0 0 1 128 70';
     bm.innerHTML='<div class="lbl">Потрачено из '+eur(lim)+'</div>'+
       '<div class="gauge" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(lim)+' за '+dm(ps)+'–'+dm(pe)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg>'+
-      '<div class="gnum">'+num(r2s,'€')+'</div></div>'+
+      '<div class="gnum">'+num(r2s,'')+'</div></div>'+
       '';
     // Темп расходов периода к норме на сегодня: выше нормы — «высокие», меньше 80 % нормы — «низкие», иначе «норм»
     const pace=over?['t-warn','высокие']:r2s<norm*.8?['t-ok','низкие']:['t-grey','норм'];
