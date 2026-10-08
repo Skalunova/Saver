@@ -211,6 +211,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #bm .gauge{grid-area:1/2}
 #bt .lbl{grid-area:2/1}
 #bm .lbl{grid-area:2/2}
+#bm .lbl.cry{grid-area:3/2}
 /* «Можно» высотой до верхней трети подковы, сумма в подкове меньше и не касается дуги */
 #bt .big-n .n{font-size:76px}
 #bt .big-n .u{font-size:24px;font-weight:700}
@@ -532,14 +533,17 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const pn=D<13?new Date(Y,M,13):D<28?new Date(Y,M,28):new Date(Y,M+1,13), pe=addD(pn,-1);
     const pd=Math.round((pn-ps)/864e5);
     let pSpent=0; for(const k in spend){ if(k>=iso(ps)&&k<=iso(pe)) pSpent+=spend[k]; }
-    const norm=Math.min(pd,Math.max(0,Math.round((today-ps)/864e5)+1))*L, r2s=Math.round(pSpent*100)/100;
-    const lim=pd*L, over=r2s>norm;
+    // Перенос: нарастающий остаток на последний день прошлого периода (формула «Можно сегодня»), может быть < 0
+    let pre=0; for(const k in spend){ if(k<iso(ps)) pre+=spend[k]; }
+    const carry=Math.round((Math.round((ps-START)/864e5)*L+COVER-pre)*100)/100, cr=Math.round(carry);
+    const norm=Math.min(pd,Math.max(0,Math.round((today-ps)/864e5)+1))*L+carry, r2s=Math.round(pSpent*100)/100;
+    const lim=Math.round((pd*L+carry)*100)/100, over=r2s>norm;
     // Потрачено за период: подкова заполняется долей от лимита, внутри — сумма
     const pct=Math.min(100,r2s/lim*100), arc='M12 70 A58 58 0 0 1 128 70';
-    bm.innerHTML='<div class="lbl">Потрачено из '+eur(lim)+'</div>'+
-      '<div class="gauge" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(lim)+' за '+dm(ps)+'–'+dm(pe)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg>'+
+    bm.innerHTML='<div class="lbl">Потрачено из '+eur(Math.round(lim))+'</div>'+
+      '<div class="gauge" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(Math.round(lim))+' за '+dm(ps)+'–'+dm(pe)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg>'+
       '<div class="gnum">'+num(r2s,'')+'</div></div>'+
-      '';
+      (cr?'<div class="lbl cry">'+pd*L+(cr>0?' + '+cr+' с прошлого периода':' − '+(-cr)+' перерасход')+'</div>':'');
     // Темп расходов периода к норме на сегодня: выше нормы — «высокие», меньше 80 % нормы — «низкие», иначе «норм»
     const pace=over?['t-warn','высокие']:r2s<norm*.8?['t-ok','низкие']:['t-grey','норм'];
     bl.innerHTML=lead('Расходы с '+dm(ps)+' по '+dm(pe),'<span class="tag '+pace[0]+'">'+pace[1]+'</span>')+bl.innerHTML;
