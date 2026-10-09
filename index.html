@@ -58,23 +58,7 @@ section.collapsed>:not(h2){display:none!important}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
 main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data-tab="day"]{display:none!important}
 
-/* Ключевые суммы: подпись сверху или снизу, сумма 24 */
-.pair,.next .duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pair>div,.next .duo>div{min-width:0}
-.tm,.big{font-size:24px;font-weight:600;line-height:1.2;white-space:nowrap}
-.tm .sm{white-space:normal;margin-top:2px}
-.next .big{color:var(--save)}
-.next .big.in{color:var(--ink)}
-.next .need .big{color:var(--pay)}
-
-/* Список с итогом: «Детализация периода» */
 #nextb{display:grid;gap:12px}
-.next ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
-.next li{display:flex;justify-content:space-between;gap:12px}
-.next li span:last-child{white-space:nowrap}
-.next li.mi{font-size:13px;color:var(--muted);padding-left:12px}
-.next li.mi.ok span:first-child{text-decoration:line-through}
-.next li.left{font-weight:600;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
 
 /* Строки списков и таблиц */
 .debts,.lst{width:100%;border-collapse:collapse}
@@ -240,10 +224,10 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #bh .hmb b{font-weight:400}
 
 /* Чекбоксы списков */
-#shop input[type=checkbox],#wish input[type=checkbox]{-webkit-appearance:none;appearance:none;width:24px;height:24px;border:2px solid var(--ink);border-radius:8px;background:var(--surface);display:grid;place-content:center;cursor:pointer}
-#shop input[type=checkbox]:checked,#wish input[type=checkbox]:checked{background:var(--ink)}
-#shop input[type=checkbox]:checked::before,#wish input[type=checkbox]:checked::before{content:'';width:10px;height:5px;border:solid var(--surface);border-width:0 0 2.5px 2.5px;transform:translateY(-1px) rotate(-45deg)}
-#wish input[type=checkbox]:disabled{opacity:.3;cursor:default}
+#shop input[type=checkbox],#wish input[type=checkbox],#dt input[type=checkbox],#xl{-webkit-appearance:none;appearance:none;width:24px;height:24px;border:2px solid var(--ink);border-radius:8px;background:var(--surface);display:grid;place-content:center;cursor:pointer}
+#shop input[type=checkbox]:checked,#wish input[type=checkbox]:checked,#dt input[type=checkbox]:checked,#xl:checked{background:var(--ink)}
+#shop input[type=checkbox]:checked::before,#wish input[type=checkbox]:checked::before,#dt input[type=checkbox]:checked::before,#xl:checked::before{content:'';width:10px;height:5px;border:solid var(--surface);border-width:0 0 2.5px 2.5px;transform:translateY(-1px) rotate(-45deg)}
+#wish input[type=checkbox]:disabled,#xl:disabled{opacity:.3;cursor:default}
 .wi,.si{padding:10px 0;border-top:0}
 .wi .pr{color:var(--ink)}
 .wi .pr.t-ok{color:var(--t-ok-ink)}
@@ -283,6 +267,36 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 .wi,.si{padding:var(--s2) 0}
 /* Кнопки удаления не наследуют заливку пилюль */
 :root .panel button.x,:root .panel button.hx,:root .panel button.wx{background:none;color:var(--muted);padding:0 0 0 12px;border-radius:0}
+/* «Долгосрок» на правилах v2: без разделителей, строки как в истории трат — дата приглушённой колонкой, что, сумма */
+.debts td,.lst td{border-top:0;padding:var(--s2) 0}
+#dt td:first-child{width:36px}
+#dt td:nth-child(3){color:var(--muted);text-align:right;white-space:nowrap;padding-left:12px}
+#dt td:nth-child(4){color:var(--ink);text-align:right;white-space:nowrap;padding-left:12px}
+#dt td:nth-child(5){width:1%;white-space:nowrap}
+#dt tr.paid td:not(:first-child){color:var(--muted)}
+.panel .dpill>input,.panel .dpill>select{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
+#nextb{gap:var(--s4)}
+.next .nh,.next .nt{font-weight:600;justify-content:space-between}
+.panel .addf .ck{display:inline-flex;align-items:center;gap:8px}
+.nr>span,.pi>span:first-child{display:flex;min-width:0}
+.nr .hd,.pi .hd{flex:none}
+.next .nh .tag{margin-left:4px}
+.nl{display:grid;gap:var(--s2)}
+.nr,.pi,.pf>div,.ps>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.nr b,.pi>span:last-child,.pf b{font-weight:400;white-space:nowrap}
+.nr.ok span,.nr.ok b{color:var(--muted);text-decoration:line-through}
+.next .hd,.pbd .hd{font-style:normal;color:var(--muted);display:inline-block;min-width:3.4em}
+.per,.per:first-child{border-top:0}
+.yr{font-size:15px;font-weight:800;padding:var(--s4) 0 var(--s1)}
+.yr:first-child{padding-top:0}
+.ph{padding:var(--s2) 0}
+.per .tag{font-size:12px}
+.per .tag:not(.t-warn){color:var(--ink)}
+.pbd{gap:var(--s2);padding-bottom:var(--s4)}
+.pl{margin-top:var(--s2)}
+.pi{font-size:15px;color:var(--ink);padding-left:0}
+.ps{border-top:0;margin-top:var(--s2);padding-top:0}
+.pf{display:grid;gap:var(--s2);font-size:15px;color:var(--muted)}
 </style>
 
 </head>
@@ -314,19 +328,27 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 
   <section class="panel next" id="next" data-tab="long" data-closed><h2>Детализация периода</h2><div id="nextb"></div></section>
 
-  <section class="panel" id="xin" data-tab="long" data-closed>
+  <section class="panel bud" id="xin" data-tab="long" data-closed>
     <h2>Поступления</h2>
-    <table class="debts" id="xt"></table>
-    <form id="xf" class="df"><input type="date" id="xd" aria-label="Дата"><input type="number" id="xa" step="0.01" inputmode="decimal" placeholder="сумма" aria-label="Сумма"><select id="xc" aria-label="Валюта"><option value="RUB">₽</option><option value="EUR">€</option></select><input type="text" id="xn" placeholder="откуда, 1–2 слова" maxlength="24" aria-label="Откуда"><select id="xk" aria-label="Что пришло"><option value="">доп. деньги</option><option value="sal">зарплата</option><option value="adv">аванс</option></select><label class="ck"><input type="checkbox" id="xl">на жизнь</label><button type="submit">Добавить</button></form>
+    <form id="xf" class="addf">
+      <div class="frow"><label class="amt"><input type="number" id="xa" step="0.01" inputmode="decimal" placeholder="сумма" aria-label="Сумма"></label><label class="dpill"><span id="xcl">₽</span><select id="xc" aria-label="Валюта"><option value="RUB">₽</option><option value="EUR">€</option></select></label></div>
+      <input type="text" id="xn" placeholder="откуда, 1–2 слова" maxlength="24" aria-label="Откуда">
+      <div class="addr"><label class="dpill"><span id="xdl">сегодня</span><input type="date" id="xd" aria-label="Дата"></label><label class="dpill"><span id="xkl">доп. деньги</span><select id="xk" aria-label="Что пришло"><option value="">доп. деньги</option><option value="sal">зарплата</option><option value="adv">аванс</option></select></label></div>
+      <div class="addr"><label class="ck"><input type="checkbox" id="xl">на жизнь</label><button type="submit">Добавить</button></div>
+    </form>
     <div class="err" id="xerr"></div>
+    <table class="debts" id="xt"></table>
   </section>
 
-  <section class="panel" id="debts" data-tab="long" data-closed>
+  <section class="panel bud" id="debts" data-tab="long" data-closed>
     <h2>Обязательные платежи</h2>
-    <table class="debts" id="dt"><tbody></tbody></table>
-    <button type="button" class="addp" id="dadd" aria-expanded="false">+ Добавить платёж</button>
-    <form id="df" class="df" hidden><input type="text" id="dn" placeholder="что" aria-label="Название"><input type="text" id="da" placeholder="сумма, напр. €175" aria-label="Сумма"><input type="date" id="dd" aria-label="Дата"><button type="submit">Добавить</button></form>
+    <form id="df" class="addf">
+      <input type="text" id="dn" placeholder="что" aria-label="Название">
+      <label class="amt"><input type="text" id="da" placeholder="сумма, €175 или ₽50 000" aria-label="Сумма"></label>
+      <div class="addr"><label class="dpill"><span id="ddl">дата</span><input type="date" id="dd" aria-label="Дата"></label><button type="submit">Добавить</button></div>
+    </form>
     <div class="err" id="derr"></div>
+    <table class="debts" id="dt"><tbody></tbody></table>
   </section>
 
   <section class="panel" id="plan" data-tab="long" data-closed aria-label="График по датам"><h2>График по датам</h2><div id="planb"></div></section>
@@ -388,8 +410,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     ['d3-261005','Третий долг, 1/3','₽50 000','2026-10-13'],['d3-261105','Третий долг, 2/3','₽50 000','2026-11-13'],
     ['d3-261205','Третий долг, 3/3','₽50 000','2026-12-13'],['olya-261205','Оля, за жильё','€175','2026-12-13'],
     ['fee-270205','Взнос за семестр','€400','2027-02-13'],['fee-270805','Взнос за семестр','€400','2027-08-13'],['fee-280205','Взнос за семестр','€400','2028-02-13']];
-  document.getElementById('dt').tBodies[0].innerHTML=PAYS.map(([id,nm,a,d])=>{ const q=d.split('-'), dd=(+q[2])+'.'+q[1]+(q[0]==='2026'?'':'.'+q[0].slice(2));
-    return '<tr data-d="'+d+'"><td><input type="checkbox" data-p="'+id+'" aria-label="Оплачено: '+nm+', '+dd+'"></td><td>'+nm+'</td><td>'+a.replace(' ','\u00a0')+'</td><td>'+dd+'</td></tr>'; }).join('');
+  document.getElementById('dt').tBodies[0].innerHTML=PAYS.map(([id,nm,a,d])=>{ const q=d.split('-'), dd=q[2]+'.'+q[1]+(q[0]==='2026'?'':'.'+q[0].slice(2));
+    return '<tr data-d="'+d+'"><td><input type="checkbox" data-p="'+id+'" aria-label="Оплачено: '+nm+', '+dd+'"></td><td>'+nm+'</td><td>'+dd+'</td><td>'+a.replace(' ','\u00a0')+'</td><td></td></tr>'; }).join('');
 
   const pOpen={};
   const today=new Date(); today.setHours(0,0,0,0);
@@ -400,8 +422,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   // Сколько ушло за день по истории трат: записи, покупки для переезда, оплаченные платежи
   function dayOut(){
     const big={}, out={}, put=(k,v)=>{ out[k]=(out[k]||0)+v; };
-    document.querySelectorAll('#dt tr.paid:not([hidden])').forEach(tr=>{ const d=tr.dataset.d; if(!d||!tr.cells[2]) return; const i=tr.querySelector('input[data-p]');
-      (big[d]=big[d]||[]).push([tr.cells[1].textContent,tr.cells[2].textContent,i?'p:'+i.dataset.p:'c:'+tr.dataset.c]); });
+    document.querySelectorAll('#dt tr.paid:not([hidden])').forEach(tr=>{ const d=tr.dataset.d; if(!d||!tr.cells[3]) return; const i=tr.querySelector('input[data-p]');
+      (big[d]=big[d]||[]).push([tr.cells[1].textContent,tr.cells[3].textContent,i?'p:'+i.dataset.p:'c:'+tr.dataset.c]); });
     for(const k in spend) put(k,spend[k]); for(const k in MOVE) if(!gone['move-'+k]) put(k,MOVE[k]); for(const k in big) big[k].forEach(x=>put(k,money(x[1])));
     return {out,big};
   }
@@ -450,9 +472,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   function renderNext(){
   const days=Math.round((next.date-today)/864e5);
   const xs=ev.filter(e=>e.xid&&+e.date===+next.date), xIn=xs.reduce((s,e)=>s+e.inc,0), xSave=xs.reduce((s,e)=>s+e.save,0), toSave=next.save+xSave;
-  const left=next.inc+(next.need||0)+(next.covered||0)-next.pays.reduce((a,p)=>a+p[1],0);
-  const leftTxt=next.save?'Остаток → в копилку':'Остаток на период';
-  const isLife=p=>/^на жизнь/.test(p[0]), must=next.pays.filter(p=>!isLife(p)).reduce((a,p)=>a+p[1],0);
+  const isLife=p=>/^на жизнь/.test(p[0]);
   const dn=k=>k%10===1&&k%100!==11?'день':[2,3,4].includes(k%10)&&![12,13,14].includes(k%100)?'дня':'дней';
   const lifeTxt=p=>{ const m=/(\d+)\s*дн/.exec(p[0]); return m?'Жизнь '+m[1]+' '+dn(+m[1]):cap(p[0]); };
   const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -466,20 +486,21 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   const pm={}; ev.forEach(e=>{ if(e.xid||e.date>=next.date) return; e.pays.forEach((p,i)=>{ if(isLife(p)||/^закрыть нехватку/.test(p[0])) return;
     const r=row(p[2]), d=p[3]||(r&&r.date)||ymd(e.date), k=p[2]||ymd(e.date)+i; if((r?r.done:p[4])||d<ymd(today)) return;
     pm[k]=pm[k]||{name:r?r.name:cap(p[0]),date:d,a:0}; pm[k].a+=p[1]; }); });
-  const pre=Object.values(pm).sort((a,b)=>a.date.localeCompare(b.date)), mi=x=>'<li class="mi'+(x.done?' ok':'')+'"><span>'+fd(x.date)+' · '+esc(x.name)+(x.done?' · оплачено':'')+'</span><span>'+eur(x.a)+'</span></li>';
-  n.innerHTML='<div class="duo"><div><div class="big in">'+eur(next.inc+xIn)+'</div><div class="when">'+(xs.length?'поступило ':'поступит ')+ds(next)+'.'+(next.y%100)+(days===0?' · сегодня':days===1?' · завтра':' · через '+days+' дн.')+'</div></div>'+
-    (next.need?'<div class="need"><div class="big">−'+eur(next.need)+'</div><div class="sub">нужно раздобыть</div></div>'
-      :'<div><div class="big">'+(toSave?'+'+eur(toSave):'€0')+'</div><div class="sub">в копилку</div></div>')+'</div>'+
-    '<ul>'+(next.need?'<li><span>Добыть дополнительно</span><span>+'+eur(next.need)+'</span></li>':'')+
-    (next.covered?'<li><span>Доплата из поступлений</span><span>+'+eur(next.covered)+'</span></li>':'')+
-    (must?'<li class="out"><span>Обязательные траты</span><span>−'+eur(must)+'</span></li>'+
-      mlist.map(mi).join(''):'')+
-    next.pays.filter(isLife).map(p=>'<li class="out"><span>'+lifeTxt(p)+'</span><span>−'+eur(p[1])+'</span></li>').join('')+
-    '<li class="left"><span>'+leftTxt+'</span><span>'+eur(left)+'</span></li>'+
-    (xs.length?xs.map(x=>'<li><span>+ '+cap(x.incNote)+'</span><span>+'+eur(x.inc)+'</span></li>').join('')+
-      (xs.some(x=>x.pays.length)?xs.filter(x=>x.pays.length).map(x=>'<li class="out"><span>'+cap(x.pays[0][0])+'</span><span>−'+eur(x.pays[0][1])+'</span></li>').join(''):'')+
-      '<li class="left"><span>Поступления → в копилку</span><span>'+eur(xSave)+'</span></li>':'')+'</ul>'+
-    (pre.length?'<ul><li><span>До '+ds(next)+' оплатить</span><span>−'+eur(pre.reduce((a,x)=>a+x.a,0))+'</span></li>'+pre.map(mi).join('')+'</ul>':'');
+  const pre=Object.values(pm).sort((a,b)=>a.date.localeCompare(b.date));
+  // Плоский список по датам: что оплатить до поступления, само поступление, что из него уйдёт; внизу остаток
+  const nd=ymd(next.date), when=days===0?'сегодня':days===1?'завтра':'через '+days+' дн.';
+  const rows=[], r=(d,t,v,c)=>{ rows.push([d,'<div class="nr'+(c?' '+c:'')+'"><span><i class="hd">'+fd(d)+'</i>'+t+'</span><b>'+v+'</b></div>']); return ''; };
+  const fin=next.need?['не хватает','<span class="tag t-warn">'+eur(next.need)+'</span>']:['в копилку',eur(toSave)];
+  n.innerHTML='<div class="lead nh"><span>'+fd(nd)+' <span class="tag">'+when+'</span></span><b>'+fin[0]+' '+fin[1]+'</b></div>'+
+    '<div class="nl">'+pre.map(x=>r(x.date,esc(x.name),'−'+eur(x.a))).join('')+
+    r(nd,esc(cap(next.incNote)),'+'+eur(next.inc))+
+    xs.map(x=>r(nd,esc(cap(x.incNote)),'+'+eur(x.inc))).join('')+
+    (next.covered?r(nd,'Доплата из поступлений','+'+eur(next.covered)):'')+
+    mlist.map(x=>r(x.date,esc(x.name),'−'+eur(x.a),x.done?'ok':'')).join('')+
+    next.pays.filter(isLife).map(p=>r(nd,lifeTxt(p),'−'+eur(p[1]))).join('')+
+    xs.filter(x=>x.pays.length).map(x=>r(nd,esc(cap(x.pays[0][0])),'−'+eur(x.pays[0][1]))).join('')+
+    rows.sort((a,b)=>a[0].localeCompare(b[0])).map(x=>x[1]).join('')+'</div>'+
+    '<div class="lead nt"><span>Остаток</span><b>'+(next.need?'−'+eur(next.need):eur(toSave))+'</b></div>';
   n.innerHTML=n.innerHTML.replace(/(\d) (\d)/g,'$1\u00a0$2');
   }
   build(); renderNext();
@@ -620,7 +641,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   });
   (async()=>{
     db=await window.claude?.use?.('db');
-    if(!db){ document.querySelectorAll('.debts input[data-p]').forEach(i=>i.disabled=true); document.getElementById('dadd').hidden=true; document.getElementById('xf').hidden=true; document.getElementById('sf').hidden=true; be.textContent='Хранилище недоступно в этом окне, записи не сохранятся.'; wsum.textContent='Хотелки хранятся в облаке страницы, в этом окне они недоступны.'; return; }
+    if(!db){ document.querySelectorAll('.debts input[data-p]').forEach(i=>i.disabled=true); document.getElementById('df').hidden=true; document.getElementById('xf').hidden=true; document.getElementById('sf').hidden=true; be.textContent='Хранилище недоступно в этом окне, записи не сохранятся.'; wsum.textContent='Хотелки хранятся в облаке страницы, в этом окне они недоступны.'; return; }
     document.getElementById('wf').addEventListener('submit',async e=>{ e.preventDefault();
       const wn=document.getElementById('wn'), wp=document.getElementById('wp');
       const name=wn.value.trim(), price=Math.max(0,parseFloat(String(wp.value).replace(',','.'))||0); if(!name) return;
@@ -631,7 +652,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       del.type='button'; del.className='x'; del.textContent='×'; del.setAttribute('aria-label','Удалить '+tr.cells[1].textContent);
       del.addEventListener('click',async()=>{ if(!confirm('Удалить «'+tr.cells[1].textContent+'»?')) return;
         try{ await db.doc('paid/'+i.dataset.p).set({done:i.checked,del:true}); }catch(_){ document.getElementById('derr').textContent='Не удалилось, попробуй ещё раз.'; } });
-      tr.cells[3].appendChild(del); });
+      tr.cells[4].appendChild(del); });
     document.querySelectorAll('.debts input[data-p]').forEach(i=>i.addEventListener('change',async()=>{
       i.closest('tr').classList.toggle('paid',i.checked); renderNext(); renderBud();
       try{ await db.doc('paid/'+i.dataset.p).set({done:i.checked}); }catch(_){ i.checked=!i.checked; i.closest('tr').classList.toggle('paid',i.checked); }
@@ -643,7 +664,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       const n=document.getElementById('dn'), a=document.getElementById('da'), d=document.getElementById('dd');
       const name=n.value.trim(); if(!name||!d.value){ derr.textContent='Нужны название и дата.'; return; }
       derr.textContent='';
-      try{ await db.doc('debts/c'+Date.now()).set({name,amount:a.value.trim(),date:d.value,done:false}); n.value=''; a.value=''; d.value=''; }
+      try{ await db.doc('debts/c'+Date.now()).set({name,amount:a.value.trim(),date:d.value,done:false}); n.value=''; a.value=''; d.value=''; syncP(); }
       catch(_){ derr.textContent='Не сохранилось, попробуй ещё раз.'; }
     });
     db.collection('debts').onSnapshot(s=>{
@@ -655,8 +676,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         cb.addEventListener('change',async()=>{ tr.classList.toggle('paid',cb.checked); try{ await db.doc('debts/'+doc.id).update({done:cb.checked}); }catch(_){ cb.checked=!cb.checked; tr.classList.toggle('paid',cb.checked); } });
         const del=document.createElement('button'); del.type='button'; del.className='x'; del.textContent='×'; del.setAttribute('aria-label','Удалить '+x.name);
         del.addEventListener('click',async()=>{ if(!confirm('Удалить «'+x.name+'»?')) return; try{ await db.doc('debts/'+doc.id).delete(); }catch(_){ derr.textContent='Не удалилось, попробуй ещё раз.'; } });
-        const c=[document.createElement('td'),document.createElement('td'),document.createElement('td'),document.createElement('td')];
-        c[0].appendChild(cb); c[1].textContent=x.name; c[2].textContent=x.amount?(/₽/.test(String(x.amount))?String(x.amount).trim():'€'+String(x.amount).replace(/€/g,'').trim()):'—'; c[3].textContent=(+p[2])+'.'+p[1]+yy; c[3].appendChild(del);
+        const c=[0,1,2,3,4].map(()=>document.createElement('td'));
+        c[0].appendChild(cb); c[1].textContent=x.name; c[3].textContent=x.amount?(/₽/.test(String(x.amount))?String(x.amount).trim():'€'+String(x.amount).replace(/€/g,'').trim()):'—'; c[2].textContent=p[2]+'.'+p[1]+yy; c[4].appendChild(del);
         tr.append(...c); dt.tBodies[0].appendChild(tr);
       });
       myDebts=s.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(x=>x.name&&/^\d{4}-\d\d-\d\d$/.test(String(x.date))).map(x=>({id:x.id,name:String(x.name),amount:money(x.amount),date:String(x.date),done:!!x.done}));
@@ -689,13 +710,17 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const xt=document.getElementById('xt'), xerr=document.getElementById('xerr');
     document.getElementById('xd').value=iso(today);
     const xk=document.getElementById('xk'), xl=document.getElementById('xl'); xk.addEventListener('change',()=>{ xl.disabled=!!xk.value; if(xk.value) xl.checked=false; });
+    // Пилюли форм «Долгосрока»: поверх подписи прозрачный select или input[type=date], подпись повторяет выбранное
+    const pills=[['xd','xdl'],['xc','xcl'],['xk','xkl'],['dd','ddl']].map(([i,l])=>[document.getElementById(i),document.getElementById(l)]);
+    function syncP(){ pills.forEach(([i,l])=>{ l.textContent=i.tagName==='SELECT'?i.options[i.selectedIndex].text:!i.value?'дата':i.value===iso(today)?'сегодня':i.value.slice(8)+'.'+i.value.slice(5,7); }); }
+    pills.forEach(([i])=>i.addEventListener('change',syncP)); syncP();
     document.getElementById('xf').addEventListener('submit',async e=>{ e.preventDefault();
       const d=document.getElementById('xd'), a=document.getElementById('xa'), c=document.getElementById('xc'), nt=document.getElementById('xn');
       const amount=parseFloat(String(a.value).replace(',','.'));
       if(!d.value||!(amount>0)){ xerr.textContent='Нужны дата и сумма больше нуля.'; return; }
       xerr.textContent='';
       const lf=document.getElementById('xl'), k=document.getElementById('xk');
-      try{ await db.doc('extra/x'+Date.now()).set({date:d.value,amount,cur:c.value,note:nt.value.trim(),life:!k.value&&lf.checked,kind:k.value}); a.value=''; nt.value=''; lf.checked=false; k.value=''; }
+      try{ await db.doc('extra/x'+Date.now()).set({date:d.value,amount,cur:c.value,note:nt.value.trim(),life:!k.value&&lf.checked,kind:k.value}); a.value=''; nt.value=''; lf.checked=false; lf.disabled=false; k.value=''; syncP(); }
       catch(_){ xerr.textContent='Не сохранилось, попробуй ещё раз.'; }
     });
     db.collection('extra').onSnapshot(s=>{
@@ -705,7 +730,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       extras.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(x=>{
         const tr=document.createElement('tr'), p=x.date.split('-');
         const c=[0,1,2].map(()=>document.createElement('td'));
-        c[0].textContent=(+p[2])+'.'+p[1]; const kw=x.kind==='sal'?'зарплата':x.kind==='adv'?'аванс':x.life?'на жизнь':''; c[1].textContent=(x.note||kw||'поступление')+(kw&&x.note&&!x.note.toLowerCase().includes(kw)?', '+kw:'');
+        c[0].textContent=p[2]+'.'+p[1]; const kw=x.kind==='sal'?'зарплата':x.kind==='adv'?'аванс':x.life?'на жизнь':''; c[1].textContent=(x.note||kw||'поступление')+(kw&&x.note&&!x.note.toLowerCase().includes(kw)?', '+kw:'');
         c[2].textContent=eur(Math.round(x.cur==='RUB'?x.amount/RUB:x.amount));
         const del=document.createElement('button'); del.type='button'; del.className='x'; del.textContent='×'; del.setAttribute('aria-label','Удалить');
         del.addEventListener('click',async()=>{ try{ await db.doc('extra/'+x.id).delete(); }catch(_){ xerr.textContent='Не удалилось, попробуй ещё раз.'; } });
@@ -717,8 +742,6 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       ()=>{ be.textContent='Не удалось загрузить траты. Обнови страницу.'; });
   })();
 
-  const dadd=document.getElementById('dadd'), dfm=document.getElementById('df');
-  dadd.addEventListener('click',()=>{ dfm.hidden=!dfm.hidden; dadd.setAttribute('aria-expanded',String(!dfm.hidden)); if(!dfm.hidden) document.getElementById('dn').focus(); });
   const plan=document.getElementById('plan'), planb=document.getElementById('planb');
   // График по периодам: период начинается с поступления «на жизнь» и длится до следующего такого же
   function renderPlan(){
@@ -729,27 +752,29 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       if(!c||(life(e)&&!e.xid&&+c.evs[0].date!==+e.date)) P.push({from:new Date(e.date),evs:[e]}); else c.evs.push(e); });
     if(P[0].from>START) P[0].from=new Date(START);
     const {out}=dayOut(), ks=Object.keys(out);
-    const money=v=>eur(Math.round(v*100)/100), nw=v=>'<span class="nw">'+v+'</span>';
-    const d2=d=>dm(d)+(d.getFullYear()===today.getFullYear()?'':'.'+String(d.getFullYear()).slice(2));
-    const li=x=>'<div class="pi"><span>'+esc(x[0])+'</span><span>'+money(x[1])+'</span></div>';
+    const money=v=>eur(Math.round(v*100)/100);
+    // Строка как в истории трат: дата приглушённой колонкой, что, сумма
+    const li=x=>'<div class="pi"><span><i class="hd">'+x[0]+'</i>'+esc(x[1])+'</span><span>'+money(x[2])+'</span></div>';
     let html='';
     P.forEach((p,i)=>{
       const nx=P[i+1]?P[i+1].from:new Date(p.from.getFullYear(),p.from.getMonth()+1,p.from.getDate()), to=addD(nx,-1);
       const lo=i?iso(p.from):'', hi=P[i+1]?iso(nx):'9999';
       const spent=ks.reduce((a,k)=>a+(k>=lo&&k<hi?out[k]:0),0);
-      const ins=p.evs.map(e=>[ds(e)+' · '+e.incNote,e.inc]), outs=[];
-      p.evs.forEach(e=>e.pays.forEach(x=>{ if(!/^закрыть нехватку/.test(x[0])) outs.push([(x[3]?x[3].slice(8)+'.'+x[3].slice(5,7):ds(e))+' · '+x[0],x[1]]); }));
-      const inSum=ins.reduce((a,x)=>a+x[1],0), outSum=outs.reduce((a,x)=>a+x[1],0);
+      const ins=p.evs.map(e=>[ds(e),cap(e.incNote),e.inc]), outs=[];
+      p.evs.forEach(e=>e.pays.forEach(x=>{ if(!/^закрыть нехватку/.test(x[0])) outs.push([x[3]?x[3].slice(8)+'.'+x[3].slice(5,7):ds(e),cap(x[0]),x[1]]); }));
+      const inSum=ins.reduce((a,x)=>a+x[2],0), outSum=outs.reduce((a,x)=>a+x[2],0);
       const sv=p.evs.reduce((a,e)=>a+e.save,0), need=p.evs.reduce((a,e)=>a+(e.need||0),0);
-      const now=p.from<=today&&today<nx, pk=iso(p.from), open=pk in pOpen?pOpen[pk]:now, range=d2(p.from)+'–'+d2(to), net=sv-need;
+      const now=p.from<=today&&today<nx, pk=iso(p.from), open=pk in pOpen?pOpen[pk]:now, range=dm(p.from)+'–'+dm(to), net=sv-need, yr=p.from.getFullYear();
       const mk=p.from.getFullYear()+'-'+(p.from.getMonth()+1), pmk=i?P[i-1].from.getFullYear()+'-'+(P[i-1].from.getMonth()+1):'';
       const tag=TAGS[mk]&&mk!==pmk?'<span class="tag">'+TAGS[mk]+'</span>':'';
+      // Год — заголовком перед первым периодом года, в датах периодов года нет
+      if(!i||P[i-1].from.getFullYear()!==yr) html+='<div class="yr">'+yr+'</div>';
       html+='<div class="per'+(now?' now':'')+(open?'':' closed')+'">'+
-        '<button type="button" class="ph" data-p="'+pk+'" aria-expanded="'+open+'"><span class="pt">'+range+'</span>'+(now?'<span class="tag">сейчас</span>':'')+tag+'<b class="'+(net<0?'neg':'pos')+'">'+(net<0?'−':'+')+money(Math.abs(net))+'</b></button>'+
-        '<div class="pbd"><div class="pl"><span>Поступления</span><b>'+money(inSum)+'</b></div>'+ins.map(li).join('')+
-        (outs.length?'<div class="pl"><span>Расходы</span><b class="neg">−'+money(outSum)+'</b></div>'+outs.map(li).join(''):'')+
-        '<div class="ps">'+(sv||!need?'<div><span>В копилку</span><b class="pos">'+(sv?'+':'')+money(sv)+'</b></div>':'')+(need?'<div><span>Не хватает</span><b class="neg">−'+money(need)+'</b></div>':'')+'</div>'+
-        '<div class="pf">'+nw('по истории потрачено '+money(spent))+' · '+nw('в копилке '+money(p.evs[p.evs.length-1].total))+'</div></div></div>';
+        '<button type="button" class="ph" data-p="'+pk+'" aria-expanded="'+open+'"><span class="pt">'+range+'</span>'+(now?'<span class="tag">сейчас</span>':'')+tag+'<b>'+(net<0?'<span class="tag t-warn">−'+money(-net)+'</span>':'+'+money(net))+'</b></button>'+
+        '<div class="pbd"><div class="pl"><span>Поступления</span><b>+'+money(inSum)+'</b></div>'+ins.map(li).join('')+
+        (outs.length?'<div class="pl"><span>Расходы</span><b>−'+money(outSum)+'</b></div>'+outs.map(li).join(''):'')+
+        '<div class="ps">'+(sv||!need?'<div><span>В копилку</span><b>'+(sv?'+':'')+money(sv)+'</b></div>':'')+(need?'<div><span>Не хватает</span><b><span class="tag t-warn">−'+money(need)+'</span></b></div>':'')+'</div>'+
+        '<div class="pf"><div><span>По истории потрачено</span><b>'+money(spent)+'</b></div><div><span>В копилке</span><b>'+money(p.evs[p.evs.length-1].total)+'</b></div></div></div></div>';
     });
     planb.innerHTML=html.replace(/(\d) (\d)/g,'$1\u00a0$2');
   }
