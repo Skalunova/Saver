@@ -333,7 +333,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     <form id="xf" class="addf">
       <div class="frow"><label class="amt"><input type="number" id="xa" step="0.01" inputmode="decimal" placeholder="сумма" aria-label="Сумма"></label><label class="dpill"><span id="xcl">₽</span><select id="xc" aria-label="Валюта"><option value="RUB">₽</option><option value="EUR">€</option></select></label></div>
       <input type="text" id="xn" placeholder="откуда, 1–2 слова" maxlength="24" aria-label="Откуда">
-      <div class="addr"><label class="dpill"><span id="xdl">сегодня</span><input type="date" id="xd" aria-label="Дата"></label><label class="dpill"><span id="xkl">доп. деньги</span><select id="xk" aria-label="Что пришло"><option value="">доп. деньги</option><option value="sal">зарплата</option><option value="adv">аванс</option></select></label></div>
+      <div class="addr"><label class="dpill"><span id="xdl">сегодня</span><input type="date" id="xd" aria-label="Дата"></label><label class="dpill"><span id="xkl">доп. деньги</span><select id="xk" aria-label="Что пришло"><option value="">доп. деньги</option><option value="sal">зарплата</option><option value="adv">аванс</option><option value="bal">на счету сейчас</option></select></label></div>
       <div class="addr"><label class="ck"><input type="checkbox" id="xl">на жизнь</label><button type="submit">Добавить</button></div>
     </form>
     <div class="err" id="xerr"></div>
@@ -407,8 +407,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   // Обязательные платежи: единственный источник сумм и дат и для таблицы, и для плана. Id не менять — по ним хранятся галочки
   const PAYS=[['fee-260925','Взнос за семестр TUHH','€420','2026-09-25'],['friend-260928','Долг наличкой','€175','2026-09-28'],
     ['dorm-261005','Общага','€330','2026-09-28'],['dep-261005','Депозит за общагу','€400','2026-09-28'],
-    ['d3-261005','Третий долг, 1/3','₽50 000','2026-10-13'],['d3-261105','Третий долг, 2/3','₽50 000','2026-11-13'],
-    ['d3-261205','Третий долг, 3/3','₽50 000','2026-12-13'],['olya-261205','Оля, за жильё','€175','2026-12-13'],
+    ['d3-261005','Третий долг, 1/3','₽50 000','2026-11-13'],['d3-261105','Третий долг, 2/3','₽50 000','2026-12-13'],
+    ['d3-261205','Третий долг, 3/3','₽50 000','2027-01-13'],['olya-261205','Оля, за жильё','€175','2026-12-13'],
     ['fee-270205','Взнос за семестр','€400','2027-02-13'],['fee-270805','Взнос за семестр','€400','2027-08-13'],['fee-280205','Взнос за семестр','€400','2028-02-13']];
   document.getElementById('dt').tBodies[0].innerHTML=PAYS.map(([id,nm,a,d])=>{ const q=d.split('-'), dd=q[2]+'.'+q[1]+(q[0]==='2026'?'':'.'+q[0].slice(2));
     return '<tr data-d="'+d+'"><td><input type="checkbox" data-p="'+id+'" aria-label="Оплачено: '+nm+', '+dd+'"></td><td>'+nm+'</td><td>'+dd+'</td><td>'+a.replace(' ','\u00a0')+'</td><td></td></tr>'; }).join('');
@@ -434,7 +434,10 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     ev.length=0; BASE.forEach(e=>ev.push(Object.assign({},e,{pays:e.pays.slice()})));
     const toEur=x=>Math.round(x.cur==='RUB'?x.amount/RUB:x.amount);
     // Факт зарплаты или аванса заменяет плановую сумму ближайшего поступления того же вида
-    extras.filter(x=>x.kind).forEach(x=>{ const d=new Date(x.date+'T00:00'); let o=null;
+    // Сверка заменяет вписанный остаток (carry) следующего поступления «на жизнь»: фактический остаток уже учтён
+    const isLv=e=>!e.start&&!e.xid&&e.pays.some(p=>/^на жизнь/.test(p[0]));
+    extras.filter(x=>x.kind==='bal').forEach(x=>{ const d=new Date(x.date+'T00:00'), o=ev.filter(e=>isLv(e)&&e.date>d).sort((a,b)=>a.date-b.date)[0]; if(o) o.carry=0; });
+    extras.filter(x=>x.kind==='sal'||x.kind==='adv').forEach(x=>{ const d=new Date(x.date+'T00:00'); let o=null;
       ev.forEach(e=>{ if(e.kind===x.kind&&(!o||Math.abs(e.date-d)<Math.abs(o.date-d))) o=e; });
       if(o) o.fact=(o.fact||0)+toEur(x); });
     ev.forEach(e=>{ const got=e.fact!=null?e.fact:e.plan, w=e.kind==='sal'?'зарплата':e.kind==='adv'?'аванс':'';
@@ -462,6 +465,18 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       let prev=null; ev.forEach(o=>{ if(!o.xid&&o.date<=d&&o.need>0) prev=o; });
       if(prev){ const c=Math.min(prev.need,amt); prev.need-=c; prev.covered=(prev.covered||0)+c;
         e.pays.push(['закрыть нехватку '+ds(prev),c]); e.save=amt-c; }
+      ev.push(e);
+    });
+    // Сверка: сколько на счету на дату. Остаток периода по факту = на счету − неоплаченные платежи периода с этой даты − дни до конца периода × L.
+    // Разница с итогом периода по плану — строка «сверка»: плюс закрывает нехватку, остаток в копилку; минус — нехватка
+    extras.filter(x=>x.kind==='bal').sort((a,b)=>a.date.localeCompare(b.date)).forEach(x=>{
+      const p=x.date.split('-').map(Number), d=new Date(p[0],p[1]-1,p[2]), lv=ev.filter(isLv).sort((a,b)=>a.date-b.date);
+      let st=null, nx=null; lv.forEach(e=>{ if(e.date<=d) st=e; else if(!nx) nx=e; });
+      const from=st?st.date:START, pe=ev.filter(e=>e.date>=from&&(!nx||e.date<nx.date));
+      const net=pe.reduce((a,e)=>a+e.save-(e.need||0),0), due=pe.reduce((a,e)=>a+e.pays.filter(q=>q[3]&&q[3]>=x.date&&!q[4]).reduce((b,q)=>b+q[1],0),0);
+      const have=toEur(x), corr=Math.round(have-due-(nx?Math.round((nx.date-d)/864e5):0)*L-net);
+      const e={date:d,y:p[0],m:p[1],d:p[2],inc:Math.max(0,corr),incNote:'сверка, на счету '+eur(have),pays:corr<0?[['сверка',-corr]]:[],save:Math.max(0,corr),need:Math.max(0,-corr),xid:x.id};
+      pe.forEach(o=>{ if(!(o.need>0)||!(e.save>0)) return; const c=Math.min(o.need,e.save); o.need-=c; o.covered=(o.covered||0)+c; e.save-=c; e.pays.push(['закрыть нехватку '+ds(o),c]); });
       ev.push(e);
     });
     ev.sort((a,b)=>a.date-b.date);
@@ -724,13 +739,13 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       catch(_){ xerr.textContent='Не сохранилось, попробуй ещё раз.'; }
     });
     db.collection('extra').onSnapshot(s=>{
-      extras=[]; s.docs.forEach(d=>{const x=d.data()||{}; const a=Number(x.amount); if(x.date&&a>0) extras.push({id:d.id,date:String(x.date),amount:a,cur:x.cur==='EUR'?'EUR':'RUB',note:x.note?String(x.note):'',life:x.life===true,kind:x.kind==='sal'||x.kind==='adv'?x.kind:d.id==='x20260928a'?'adv':''});});
+      extras=[]; s.docs.forEach(d=>{const x=d.data()||{}; const a=Number(x.amount); if(x.date&&a>0) extras.push({id:d.id,date:String(x.date),amount:a,cur:x.cur==='EUR'?'EUR':'RUB',note:x.note?String(x.note):'',life:x.life===true,kind:['sal','adv','bal'].includes(x.kind)?x.kind:d.id==='x20260928a'?'adv':''});});
       build(); renderNext(); renderPlan(); renderBud();
       xt.innerHTML='';
       extras.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(x=>{
         const tr=document.createElement('tr'), p=x.date.split('-');
         const c=[0,1,2].map(()=>document.createElement('td'));
-        c[0].textContent=p[2]+'.'+p[1]; const kw=x.kind==='sal'?'зарплата':x.kind==='adv'?'аванс':x.life?'на жизнь':''; c[1].textContent=(x.note||kw||'поступление')+(kw&&x.note&&!x.note.toLowerCase().includes(kw)?', '+kw:'');
+        c[0].textContent=p[2]+'.'+p[1]; const kw=x.kind==='sal'?'зарплата':x.kind==='adv'?'аванс':x.kind==='bal'?'на счету':x.life?'на жизнь':''; c[1].textContent=(x.note||kw||'поступление')+(kw&&x.note&&!x.note.toLowerCase().includes(kw)?', '+kw:'');
         c[2].textContent=eur(Math.round(x.cur==='RUB'?x.amount/RUB:x.amount));
         const del=document.createElement('button'); del.type='button'; del.className='x'; del.textContent='×'; del.setAttribute('aria-label','Удалить');
         del.addEventListener('click',async()=>{ try{ await db.doc('extra/'+x.id).delete(); }catch(_){ xerr.textContent='Не удалилось, попробуй ещё раз.'; } });
