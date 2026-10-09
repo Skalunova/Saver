@@ -557,8 +557,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     // Перенос: нарастающий остаток на последний день прошлого периода (формула «Можно сегодня»), может быть < 0
     let pre=0; for(const k in spend){ if(k<iso(ps)) pre+=spend[k]; }
     const carry=Math.round((Math.round((ps-START)/864e5)*L+COVER+lifeX('',iso(addD(ps,-1)))-pre)*100)/100+lifeX(iso(ps),iso(today));
-    const norm=Math.min(pd,Math.max(0,Math.round((today-ps)/864e5)+1))*L+carry, r2s=Math.round(pSpent*100)/100;
-    let lim=Math.round((pd*L+carry)*100)/100, over=r2s>norm, can=bal;
+    const r2s=Math.round(pSpent*100)/100;
+    let lim=Math.round((pd*L+carry)*100)/100, can=bal;
     // От денег на счету: последняя сверка «на счету сейчас» в этом периоде. Свободно = на счету + поступления «на жизнь» после неё
     // − платежи с её даты до следующего поступления (кроме оплаченных на момент сверки) − траты после неё; делится на дни до поступления
     const sv=extras.filter(x=>x.kind==='bal'&&x.date>=iso(ps)&&x.date<=iso(today)).sort((a,b)=>(a.date+a.id).localeCompare(b.date+b.id)).pop();
@@ -582,9 +582,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       '<div class="gauge" role="img" aria-label="Потрачено '+eur(r2s)+' из '+eur(Math.round(lim))+' за '+dm(ps)+'–'+dm(pe)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg>'+
       '<div class="gnum">'+num(r2s,'')+'</div></div>';
     // Темп расходов периода к норме на сегодня: выше нормы — «высокие», меньше 80 % нормы — «низкие», иначе «норм»
-    // От денег на счету темп — по тому, сколько выходит в день до поступления: меньше 80 % от L — «высокие», больше L / 0.8 — «низкие»
-    const pace=cash?(cash.a<L*.8?['t-warn','высокие']:cash.a>L/.8?['t-ok','низкие']:['t-grey','норм']):over?['t-warn','высокие']:r2s<norm*.8?['t-ok','низкие']:['t-grey','норм'];
-    bl.innerHTML=lead('Расходы с '+dm(ps)+' по '+dm(pe),'<span class="tag '+pace[0]+'">'+pace[1]+'</span>')+bl.innerHTML;
+    // Шильдик — сколько процентов суммы периода (лимит на подкове) уже потрачено
+    const used=lim>0?Math.round(r2s/lim*100):0;
+    bl.innerHTML=lead('Потрачено '+dm(ps)+'–'+dm(pe),'<span class="tag t-grey">'+used+'\u00a0%</span>')+bl.innerHTML;
     const {out,big}=dayOut();
     const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(MOVE).filter(k=>!gone['move-'+k]),Object.keys(big)))].sort();
     const line=(l,v,c)=>'<div><span>'+l+'</span><b'+(c?' class="'+c+'"':'')+'>'+v+'</b></div>';
