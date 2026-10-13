@@ -371,9 +371,23 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     collection(c){ return { onSnapshot(f){ (subs[c]=subs[c]||[]).push(f); setTimeout(()=>f(snap(c)),0); return ()=>{}; } }; }
   };
   // Пустой браузер: сначала последний бэкап из data.json рядом со страницей, без сети — SEED
+  // Дополнения из data.json (patches): записи, внесённые не с телефона, добавляются один раз (id в saver-patches).
+  // Траты дня — только те, чьей суммы ещё нет среди записей этого дня; поступления — если такого id нет
+  function applyPatches(src){
+    let done=[]; try{ done=JSON.parse(localStorage.getItem('saver-patches')||'[]'); }catch(_){ }
+    const m=load(); let ch=false;
+    (src.patches||[]).forEach(pt=>{ if(done.includes(pt.id)) return;
+      Object.entries(pt.spend||{}).forEach(([day,its])=>{ const d=(m.spend=m.spend||{})[day]||{amount:0,items:[]}; d.items=d.items||[];
+        its.forEach(i=>{ if(d.items.some(x=>Math.abs(x.a-i.a)<0.01)) return; d.items.push(i); d.amount=Math.round((d.amount+i.a)*100)/100; });
+        m.spend[day]=d; });
+      Object.entries(pt.extra||{}).forEach(([id,x])=>{ m.extra=m.extra||{}; if(!m.extra[id]) m.extra[id]=x; });
+      done.push(pt.id); ch=true; });
+    delete m.patches;
+    if(ch){ try{ localStorage.setItem(KEY,JSON.stringify(m)); localStorage.setItem('saver-patches',JSON.stringify(done)); }catch(_){ } }
+  }
   async function restore(){
-    try{ if(localStorage.getItem(KEY)) return; }catch(_){ return; }
-    try{ const r=await fetch('data.json',{cache:'no-store'}); if(r.ok){ mem=await r.json(); localStorage.setItem(KEY,JSON.stringify(mem)); } }catch(_){ }
+    let has=false; try{ has=!!localStorage.getItem(KEY); }catch(_){ return; }
+    try{ const r=await fetch('data.json',{cache:'no-store'}); if(r.ok){ const src=await r.json(); if(!has){ mem=src; } applyPatches(src); if(!has) try{ localStorage.setItem(KEY,JSON.stringify(mem)); }catch(_){ } } }catch(_){ }
   }
   let ready=null;
   window.claude={use:async n=>{ if(n!=='db') return null; await (ready=ready||restore()); return db; }};
