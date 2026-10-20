@@ -297,6 +297,10 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 .pi{font-size:15px;color:var(--ink);padding-left:0}
 .ps{border-top:0;margin-top:var(--s2);padding-top:0}
 .pf{display:grid;gap:var(--s2);font-size:15px;color:var(--muted)}
+.ptot{display:grid;gap:var(--s1);padding:var(--s4) 0 0}
+.ptot span{font-size:15px;color:var(--muted)}
+.ptot b{font-size:36px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.ptot b small{font-size:.5em;font-weight:700;letter-spacing:0;margin-right:2px}
 </style>
 
 </head>
@@ -827,6 +831,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         '<div class="ps">'+(sv||!need?'<div><span>В копилку</span><b>'+(sv?'+':'')+money(sv)+'</b></div>':'')+(need?'<div><span>Не хватает</span><b><span class="tag t-warn">−'+money(need)+'</span></b></div>':'')+'</div>'+
         '<div class="pf"><div><span>По истории потрачено</span><b>'+money(spent)+'</b></div><div><span>В копилке</span><b>'+money(p.evs[p.evs.length-1].total)+'</b></div></div></div></div>';
     });
+    // Итог под графиком — сколько будет в копилке к концу последнего периода, как «Итого за всё время» в истории
+    const lp=P[P.length-1], le=addD(new Date(lp.from.getFullYear(),lp.from.getMonth()+1,lp.from.getDate()),-1), tot=Math.round(lp.evs[lp.evs.length-1].total);
+    html+='<div class="ptot"><span>В копилке к '+dm(le)+'.'+le.getFullYear()+'</span><b><small>€</small>'+tot.toLocaleString('ru-RU').replace(/\s/g,'\u00a0')+'</b></div>';
     planb.innerHTML=html.replace(/(\d) (\d)/g,'$1\u00a0$2');
   }
   renderPlan(); planOk=true;
