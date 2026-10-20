@@ -407,8 +407,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   add(2026,9,25,1044,'баланс на счёте',[],{start:true}); // стартовый баланс, не поступление; €624 после взноса — остаток 28.09
   add(2026,9,28,460,'аванс',[['комиссия за перевод',23],['на жизнь 15 дн. × €23',345],['обустройство и еда после переезда',678]],{kind:'adv',carry:624});
   add(2026,10,13,511,'зарплата',[['на жизнь 15 дн. × €23',345]],{kind:'sal',carry:316});
-  add(2026,10,15,992,'блок-счёт, после похода в банк (дата примерная)',[]);
-  add(2026,10,15,1686,'премия',[]);
+  // 15.10.2026 блок-счёт и премия не пришли: блок-счёт в плане с 15.11, следующая премия — в январе
   const end=(y,m)=>{const d=dim(y,m)-15, nm=m===12?1:m+1; add(y,m,28,1264,'аванс',[['аренда 1.'+String(nm).padStart(2,'0'),330],['на жизнь '+d+' дн. × €23',d*L]],{kind:'adv'});};
   end(2026,10);
   for(let y=2026;y<=2028;y++)for(let m=1;m<=12;m++){
@@ -481,13 +480,14 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         e.pays.push(['закрыть нехватку '+ds(prev),c]); e.save=amt-c; }
       ev.push(e);
     });
-    // Сверка: на счету на дату. Свободно = на счету − svDue(); план ждёт на счету жизнь до следующего поступления (дни × L) и нехватку, если она есть.
-    // Меньше ожидаемого — разница уменьшает копилку периода (остаток — нехватка); больше — закрывает нехватку, сверх неё в копилку заранее не идёт.
+    // Сверка: на счету на дату. Свободно = на счету − svDue(); копилку Полина не переводит, поэтому план ждёт на счету жизнь до следующего
+    // поступления (дни × L) плюс итог периода (отложенное минус нехватка). Меньше ожидаемого — разница уменьшает копилку периода (остаток — нехватка);
+    // больше — закрывает нехватку, сверх неё в копилку заранее не идёт.
     // Считаются только события периода не позже даты сверки: будущие поступления (блок-счёт, премия) ещё не пришли
     extras.filter(x=>x.kind==='bal').sort((a,b)=>(a.date+a.id).localeCompare(b.date+b.id)).forEach(x=>{
       const p=x.date.split('-').map(Number), d=new Date(p[0],p[1]-1,p[2]), [ps,pn]=perOf(d), pe=ev.filter(e=>e.date>=ps&&e.date<=d);
       const net=pe.reduce((a,e)=>a+e.save-(e.need||0),0), need=pe.reduce((a,e)=>a+(e.need||0),0), have=toEur(x);
-      let corr=Math.round(have-svDue(x)-Math.round((pn-d)/864e5)*L-Math.min(0,net)); if(corr>0) corr=Math.min(corr,need);
+      let corr=Math.round(have-svDue(x)-Math.round((pn-d)/864e5)*L-net); if(corr>0) corr=Math.min(corr,need);
       const e={date:d,y:p[0],m:p[1],d:p[2],inc:Math.max(0,corr),incNote:'сверка, на счету '+eur(have),pays:[],save:Math.max(0,corr),need:0,xid:x.id};
       if(corr<0){ let r=-corr; e.pays.push(['сверка',r]); pe.slice().reverse().forEach(o=>{ const c=Math.min(Math.max(0,o.save),r); o.save-=c; r-=c; }); e.need=r; }
       pe.forEach(o=>{ if(!(o.need>0)||!(e.save>0)) return; const c=Math.min(o.need,e.save); o.need-=c; o.covered=(o.covered||0)+c; e.save-=c; e.pays.push(['закрыть нехватку '+ds(o),c]); });
