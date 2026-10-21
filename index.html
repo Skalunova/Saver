@@ -384,7 +384,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       Object.entries(pt.spend||{}).forEach(([day,its])=>{ const d=(m.spend=m.spend||{})[day]||{amount:0,items:[]}; d.items=d.items||[];
         its.forEach(i=>{ if(d.items.some(x=>Math.abs(x.a-i.a)<0.01)) return; d.items.push(i); d.amount=Math.round((d.amount+i.a)*100)/100; });
         m.spend[day]=d; });
-      Object.entries(pt.extra||{}).forEach(([id,x])=>{ m.extra=m.extra||{}; if(!m.extra[id]) m.extra[id]=x; });
+      ['extra','shop'].forEach(c=>Object.entries(pt[c]||{}).forEach(([id,x])=>{ m[c]=m[c]||{}; if(!m[c][id]) m[c][id]=x; }));
       done.push(pt.id); ch=true; });
     delete m.patches;
     if(ch){ try{ localStorage.setItem(KEY,JSON.stringify(m)); localStorage.setItem('saver-patches',JSON.stringify(done)); }catch(_){ } }
@@ -402,7 +402,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   const L=23, eur=n=>'€'+n.toLocaleString('ru-RU').replace(/\s/g,' ').replace(',','.');
   const dim=(y,m)=>new Date(y,m,0).getDate();
   const MON=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
-  const TAGS={'2027-2':'подача ВНЖ','2027-3':'карта ВНЖ','2027-6':'ВНЖ действует','2027-9':'последний блок-счёт','2028-2':'продление','2028-9':'конец магистратуры'};
+  const TAGS={'2027-2':'подача ВНЖ','2027-3':'карта ВНЖ','2027-6':'ВНЖ действует','2027-8':'последний блок-счёт','2028-2':'продление','2028-9':'конец магистратуры'};
   const ev=[];
   // Плановые поступления. kind — зарплата ('sal') или аванс ('adv'): их сумму заменяет факт из «Поступлений»;
   // carry — остаток прошлых денег, входит в поступление и фактом не заменяется. Платежи из таблицы в план добавляет build()
@@ -411,13 +411,14 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   add(2026,9,25,1044,'баланс на счёте',[],{start:true}); // стартовый баланс, не поступление; €624 после взноса — остаток 28.09
   add(2026,9,28,460,'аванс',[['комиссия за перевод',23],['на жизнь 15 дн. × €23',345],['обустройство и еда после переезда',678]],{kind:'adv',carry:624});
   add(2026,10,13,511,'зарплата',[['на жизнь 15 дн. × €23',345]],{kind:'sal',carry:316});
-  // 15.10.2026 блок-счёт и премия не пришли: блок-счёт в плане с 15.11, следующая премия — в январе
+  // Блок-счёт: 21.10.2026 пришёл двойной платёж за сентябрь и октябрь, дальше по €992 26-го до августа 2027. Премии 15.10 не было, следующая — в январе
+  add(2026,10,21,1984,'блок-счёт за сентябрь и октябрь',[]);
   const end=(y,m)=>{const d=dim(y,m)-15, nm=m===12?1:m+1; add(y,m,28,1264,'аванс',[['аренда 1.'+String(nm).padStart(2,'0'),330],['на жизнь '+d+' дн. × €23',d*L]],{kind:'adv'});};
   end(2026,10);
   for(let y=2026;y<=2028;y++)for(let m=1;m<=12;m++){
     const k=y*100+m; if(k<=202610||k>202809)continue;
     add(y,m,13,1545,'зарплата',[['на жизнь 15 дн. × €23',345]],{kind:'sal'});
-    if(k<=202709)add(y,m,15,992,'блок-счёт',[]);
+    if(k<=202708)add(y,m,26,992,'блок-счёт',[]);
     if([1,4,7,10].includes(m))add(y,m,15,1686,'премия',[]);
     end(y,m);
   }
@@ -486,15 +487,18 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     });
     // Сверка: на счету на дату. Свободно = на счету − svDue(); копилку Полина не переводит, поэтому план ждёт на счету жизнь до следующего
     // поступления (дни × L) плюс итог периода (отложенное минус нехватка). Меньше ожидаемого — разница уменьшает копилку периода (остаток — нехватка);
-    // больше — закрывает нехватку, сверх неё в копилку заранее не идёт.
+    // больше — закрывает нехватку, остальное в копилку (на жизнь остаётся не больше L в день).
     // Считаются только события периода не позже даты сверки: будущие поступления (блок-счёт, премия) ещё не пришли
     extras.filter(x=>x.kind==='bal').sort((a,b)=>(a.date+a.id).localeCompare(b.date+b.id)).forEach(x=>{
       const p=x.date.split('-').map(Number), d=new Date(p[0],p[1]-1,p[2]), [ps,pn]=perOf(d), pe=ev.filter(e=>e.date>=ps&&e.date<=d);
-      const net=pe.reduce((a,e)=>a+e.save-(e.need||0),0), need=pe.reduce((a,e)=>a+(e.need||0),0), have=toEur(x);
-      let corr=Math.round(have-svDue(x)-Math.round((pn-d)/864e5)*L-net); if(corr>0) corr=Math.min(corr,need);
+      // Копилка лежит там же, где деньги на жизнь: «на счету» — все деньги, поэтому план ждёт всё накопленное к дате сверки, а не только этот период
+      const net=ev.filter(e=>e.date<=d).reduce((a,e)=>a+e.save-(e.need||0),0), have=toEur(x);
+      const corr=Math.round(have-svDue(x)-Math.round((pn-d)/864e5)*L-net);
       const e={date:d,y:p[0],m:p[1],d:p[2],inc:Math.max(0,corr),incNote:'сверка, на счету '+eur(have),pays:[],save:Math.max(0,corr),need:0,xid:x.id};
       if(corr<0){ let r=-corr; e.pays.push(['сверка',r]); pe.slice().reverse().forEach(o=>{ const c=Math.min(Math.max(0,o.save),r); o.save-=c; r-=c; }); e.need=r; }
       pe.forEach(o=>{ if(!(o.need>0)||!(e.save>0)) return; const c=Math.min(o.need,e.save); o.need-=c; o.covered=(o.covered||0)+c; e.save-=c; e.pays.push(['закрыть нехватку '+ds(o),c]); });
+      // Нехватка от прошлых сверок периода гасится отложенным, которое пришло позже (например, блок-счёт): деньги на одной карте
+      const all=pe.concat(e); all.forEach(o=>{ all.forEach(q=>{ if(q===o||!(o.need>0)||!(q.save>0)) return; const c=Math.min(o.need,q.save); o.need-=c; q.save-=c; }); });
       ev.push(e);
     });
     ev.sort((a,b)=>a.date-b.date);
@@ -594,7 +598,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       // Поступления «на жизнь» после сверки — по дате (в день сверки — внесённые позже неё), не позже сегодня
       const inc=extras.reduce((t,x)=>t+(x.life&&x.date<=iso(today)&&(x.date>sv.date||x.date===sv.date&&tsOf(x)>tid)?eurOf(x):0),0);
       const free=Math.round((eurOf(sv)+inc-due-after)*100)/100, tAfter=tv-(sv.date===iso(today)?sv.sp:0);
-      cash={free,dl,a:(free+tAfter)/dl}; can=Math.round((cash.a-tAfter)*100)/100; lim=Math.round((r2s+Math.max(0,free))*100)/100;
+      // Сверх L в день — копилка: на жизнь до поступления не больше L в день
+      cash={free,dl,a:Math.min(L,(free+tAfter)/dl)}; can=Math.round((cash.a-tAfter)*100)/100; lim=Math.round((r2s+Math.max(0,Math.min(free,cash.a*dl-tAfter)))*100)/100;
     }
     curBal=can;
     bt.innerHTML='<div class="lbl">Можно сегодня, €</div><div class="big-n">'+num(can>=MIN?Math.floor(can):0,'')+'</div>';
