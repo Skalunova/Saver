@@ -58,7 +58,6 @@ section.collapsed>:not(h2){display:none!important}
 .tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
 main[data-tab="day"]>section[data-tab="long"],main[data-tab="long"]>section[data-tab="day"]{display:none!important}
 
-#nextb{display:grid;gap:12px}
 
 /* Строки списков и таблиц */
 .debts,.lst{width:100%;border-collapse:collapse}
@@ -275,12 +274,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #dt td:nth-child(5){width:1%;white-space:nowrap}
 #dt tr.paid td:not(:first-child){color:var(--muted)}
 .panel .dpill>input,.panel .dpill>select{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
-#nextb{gap:var(--s4)}
-.next .nh,.next .nt{font-weight:600;justify-content:space-between}
 .panel .addf .ck{display:inline-flex;align-items:center;gap:8px}
 .nr>span,.pi>span:first-child{display:flex;min-width:0}
 .nr .hd,.pi .hd{flex:none}
-.next .nh .tag{margin-left:4px}
 .nl{display:grid;gap:var(--s2)}
 .nr,.pi,.pf>div,.ps>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .nr b,.pi>span:last-child,.pf b{font-weight:400;white-space:nowrap}
@@ -348,8 +344,6 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     <div class="err" id="wsum"></div>
     <div id="wl"></div>
   </section>
-
-  <section class="panel next" id="next" data-tab="long" data-closed><h2>Детализация периода</h2><div id="nextb"></div></section>
 
   <section class="panel bud" id="cfg" data-tab="long" data-closed><h2>Настройки</h2><div id="cfgb"></div><button type="button" id="cfge">Изменить</button></section>
 
@@ -432,7 +426,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   const PAYS=[];
   const pOpen={};
   const today=new Date(); today.setHours(0,0,0,0);
-  let extras=[], next=null, planOk=false, gone={}, myDebts=[];
+  let extras=[], planOk=false, gone={}, myDebts=[];
   const MOVE={}; // траты вне дневного лимита, в шаблоне нет
   const money=t=>parseFloat(String(t).replace(/[^\d,.]/g,'').replace(',','.'))||0;
   // Сколько ушло за день по истории трат: записи, покупки для переезда, оплаченные платежи
@@ -501,45 +495,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     ev.sort((a,b)=>a.date-b.date);
     // Нехватку периода закрывает копилка: в итог идёт отложенное минус нехватка
     let t=0; ev.forEach(e=>{t+=e.save-(e.need||0);e.total=t;});
-    next=ev.find(e=>!e.start&&!e.xid&&e.date>=today)||null;
   }
-  const n=document.getElementById('nextb');
-  function renderNext(){
-  if(!next){ n.innerHTML='<p class="sub" style="margin:0">'+(incs.length?'Поступлений в горизонте плана больше нет.':'Добавь поступления в «Настройках».')+'</p>'; return; }
-  const days=Math.round((next.date-today)/864e5);
-  const xs=ev.filter(e=>e.xid&&+e.date===+next.date), xIn=xs.reduce((s,e)=>s+e.inc,0), xSave=xs.reduce((s,e)=>s+e.save,0), toSave=next.save+xSave;
-  const isLife=p=>/^на жизнь/.test(p[0]);
-  const dn=k=>k%10===1&&k%100!==11?'день':[2,3,4].includes(k%10)&&![12,13,14].includes(k%100)?'дня':'дней';
-  const lifeTxt=p=>{ const m=/(\d+)\s*дн/.exec(p[0]); return m?'Жизнь '+m[1]+' '+dn(+m[1]):cap(p[0]); };
-  const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  // Напоминание: за что и когда платить; строки из таблицы платежей берут оттуда название, дату и отметку
-  const row=id=>{ const i=id&&document.querySelector('#dt input[data-p="'+id+'"]'); return i?{name:i.closest('tr').cells[1].textContent,date:i.closest('tr').dataset.d,done:i.checked}:null; };
-  const ml={}; next.pays.filter(p=>!isLife(p)).forEach((p,i)=>{ const r=row(p[2]), k=p[2]||'p'+i;
-    ml[k]=ml[k]||{name:r?r.name:cap(p[0]),date:p[3]||(r&&r.date)||ymd(next.date),done:r?r.done:!!p[4],a:0}; ml[k].a+=p[1]; });
-  const mlist=Object.values(ml).sort((a,b)=>a.date.localeCompare(b.date)), fd=d=>{ const q=d.split('-'); return q[2]+'.'+q[1]; };
-  // Неоплаченные платежи текущего периода, которые ещё впереди: их надо внести до поступления
-  const pm={}; ev.forEach(e=>{ if(e.xid||e.date>=next.date) return; e.pays.forEach((p,i)=>{ if(isLife(p)||/^закрыть нехватку/.test(p[0])) return;
-    const r=row(p[2]), d=p[3]||(r&&r.date)||ymd(e.date), k=p[2]||ymd(e.date)+i; if((r?r.done:p[4])||d<ymd(today)) return;
-    pm[k]=pm[k]||{name:r?r.name:cap(p[0]),date:d,a:0}; pm[k].a+=p[1]; }); });
-  const pre=Object.values(pm).sort((a,b)=>a.date.localeCompare(b.date));
-  // Плоский список по датам: что оплатить до поступления, само поступление, что из него уйдёт; внизу остаток
-  const nd=ymd(next.date), when=days===0?'сегодня':days===1?'завтра':'через '+days+' дн.';
-  const rows=[], r=(d,t,v,c)=>{ rows.push([d,'<div class="nr'+(c?' '+c:'')+'"><span><i class="hd">'+fd(d)+'</i>'+t+'</span><b>'+v+'</b></div>']); return ''; };
-  const fin=next.need?['не хватает','<span class="tag t-warn">'+eur(next.need)+'</span>']:['в копилку',eur(toSave)];
-  n.innerHTML='<div class="lead nh"><span>'+fd(nd)+' <span class="tag">'+when+'</span></span><b>'+fin[0]+' '+fin[1]+'</b></div>'+
-    '<div class="nl">'+pre.map(x=>r(x.date,esc(x.name),'−'+eur(x.a))).join('')+
-    r(nd,esc(cap(next.incNote)),'+'+eur(next.inc))+
-    xs.map(x=>r(nd,esc(cap(x.incNote)),'+'+eur(x.inc))).join('')+
-    (next.covered?r(nd,'Доплата из поступлений','+'+eur(next.covered)):'')+
-    mlist.map(x=>r(x.date,esc(x.name),'−'+eur(x.a),x.done?'ok':'')).join('')+
-    next.pays.filter(isLife).map(p=>r(nd,lifeTxt(p),'−'+eur(p[1]))).join('')+
-    xs.filter(x=>x.pays.length).map(x=>r(nd,esc(cap(x.pays[0][0])),'−'+eur(x.pays[0][1]))).join('')+
-    rows.sort((a,b)=>a[0].localeCompare(b[0])).map(x=>x[1]).join('')+'</div>'+
-    '<div class="lead nt"><span>Остаток</span><b>'+(next.need?'−'+eur(next.need):eur(toSave))+'</b></div>';
-  n.innerHTML=n.innerHTML.replace(/(\d) (\d)/g,'$1\u00a0$2');
-  }
-  build(); renderNext();
+  build();
 
   // Дневной бюджет: лимит в день со старта, перерасход и экономия переносятся
   const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -685,7 +642,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       if(!confirm('Убрать платёж из истории? Он станет неоплаченным.')) return;
       const [t,id]=b.dataset.pay.split(':');
       try{ if(t==='p'){ const i=document.querySelector('#dt input[data-p="'+id+'"]'); i.checked=false; i.closest('tr').classList.remove('paid'); await db.doc('paid/'+id).set({done:false}); }
-        else await db.doc('debts/'+id).update({done:false}); renderNext(); renderBud(); }
+        else await db.doc('debts/'+id).update({done:false}); renderBud(); }
       catch(_){ be.textContent='Не сохранилось, попробуй ещё раз.'; } return; }
     const day=b.dataset.day, its=(items[day]||[]).slice(); let tot=spend[day]||0;
     if(b.dataset.ix==='rest'){ tot=its.reduce((s,i)=>s+i.a,0); }
@@ -720,7 +677,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         try{ await db.doc('paid/'+i.dataset.p).set({done:i.checked,del:true}); }catch(_){ document.getElementById('derr').textContent='Не удалилось, попробуй ещё раз.'; } });
       tr.cells[4].appendChild(del); });
     document.querySelectorAll('.debts input[data-p]').forEach(i=>i.addEventListener('change',async()=>{
-      i.closest('tr').classList.toggle('paid',i.checked); renderNext(); renderBud(); renderPlan();
+      i.closest('tr').classList.toggle('paid',i.checked); renderBud(); renderPlan();
       try{ await db.doc('paid/'+i.dataset.p).set({done:i.checked}); }catch(_){ i.checked=!i.checked; i.closest('tr').classList.toggle('paid',i.checked); }
     }));
     const dt=document.getElementById('dt'), derr=document.getElementById('derr');
@@ -747,10 +704,10 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         tr.append(...c); dt.tBodies[0].appendChild(tr);
       });
       myDebts=s.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(x=>x.name&&/^\d{4}-\d\d-\d\d$/.test(String(x.date))).map(x=>({id:x.id,name:String(x.name),amount:money(x.amount),date:String(x.date),done:!!x.done}));
-      sortRows(); build(); renderNext(); renderBud(); renderPlan();
+      sortRows(); build(); renderBud(); renderPlan();
     }, ()=>{ derr.textContent='Не удалось загрузить свои платежи. Обнови страницу.'; });
     db.collection('paid').onSnapshot(s=>{ const m={}; gone={}; s.docs.forEach(d=>{ const x=d.data()||{}; m[d.id]=!!x.done; if(x.del) gone[d.id]=true; }); document.querySelectorAll('.debts input[data-p]').forEach(i=>{i.checked=!!m[i.dataset.p]; i.closest('tr').classList.toggle('paid',i.checked);}); document.querySelectorAll('.debts input[data-p]').forEach(i=>{ i.closest('tr').hidden=!!gone[i.dataset.p]; });
-      build(); renderNext(); renderBud(); renderPlan(); });
+      build(); renderBud(); renderPlan(); });
     const sl=document.getElementById('sl'), serr=document.getElementById('serr');
     document.getElementById('sf').addEventListener('submit',async e=>{ e.preventDefault();
       const sn=document.getElementById('sn'), name=sn.value.trim(); if(!name) return;
@@ -792,7 +749,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     });
     db.collection('extra').onSnapshot(s=>{
       extras=[]; s.docs.forEach(d=>{const x=d.data()||{}; const a=Number(x.amount); if(x.date&&a>0) extras.push({id:d.id,date:String(x.date),amount:a,note:x.note?String(x.note):'',life:x.life===true,sp:Number(x.sp)||0,paid:Array.isArray(x.paid)?x.paid:null,kind:['sal','bal'].includes(x.kind)?x.kind:''});});
-      build(); renderNext(); renderPlan(); renderBud();
+      build(); renderPlan(); renderBud();
       xt.innerHTML='';
       extras.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(x=>{
         const tr=document.createElement('tr'), p=x.date.split('-');
@@ -812,7 +769,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   // Настройки и опросник: cfg/main — лимит, старт, горизонт; inc — поступления; rec — регулярные расходы
   const escA=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-  const refresh=()=>{ build(); renderNext(); renderPlan(); renderBud(); renderCfg(); };
+  const refresh=()=>{ build(); renderPlan(); renderBud(); renderCfg(); };
   const cfgb=document.getElementById('cfgb');
   function renderCfg(){
     if(!cfg){ cfgb.innerHTML=''; return; }
