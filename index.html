@@ -622,8 +622,11 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     bl.innerHTML=lead('Потрачено сегодня',eur(tv));
     // Можно завтра — если сегодня потратить всё «Можно сегодня»; последний день периода — дальше дневной лимит от bal
     const sp0=Math.max(0,can), tom=cash&&cash.dl>1?Math.min(L,(cash.free-sp0)/(cash.dl-1)):bal-sp0+L;
-    bl.innerHTML+=lead('Можно завтра',eur(Math.max(0,Math.floor(tom))));
-    if(can<MIN&&tom<MIN){ if(cash) bl.innerHTML+=lead('Снова можно с '+dm(pn),''); else { const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal); bl.innerHTML+=lead('Снова можно с '+dm(back),eur(rest)); } }
+    // Меньше MIN € — как и «Можно сегодня», показывается 0
+    bl.innerHTML+=lead('Можно завтра',eur(tom>=MIN?Math.floor(tom):0));
+    // Снова можно: от денег на счету — день, когда остаток периода, разложенный по дням, накопится до MIN €; не успевает — с поступления по плану €L
+    if(can<MIN&&tom<MIN){ if(cash){ const per=Math.max(0,tom), j=per>0?Math.ceil(MIN/per):Infinity;
+        bl.innerHTML+=j<=cash.dl-1?lead('Снова можно с '+dm(addD(today,j)),eur(Math.floor(j*per))):lead('Снова можно с '+dm(pn),eur(L)); } else { const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal); bl.innerHTML+=lead('Снова можно с '+dm(back),eur(rest)); } }
     // Потрачено за период: подкова заполняется долей от лимита, внутри — сумма
     // Лимит бывает ≤ 0 после большого перерасхода: подкова тогда полная, знак минус перед €
     const pct=lim>0?Math.min(100,r2s/lim*100):r2s>0?100:0, arc='M12 70 A58 58 0 0 1 128 70', limT=(lim<0?'−':'')+eur(Math.abs(Math.round(lim)));
