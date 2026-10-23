@@ -325,9 +325,11 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #sav .addf .amt,#sav .addf input[type=text]{border-color:var(--hero-chip)}
 #sav .debts td{color:var(--hero-ink)}
 #acc #acb{display:grid;gap:var(--s2)}
-#sav .hgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-#vt .big-n .n{font-size:60px}
-#vm .gauge .gnum .n{font-size:30px}
+#sav .hgrid{grid-template-columns:minmax(0,1fr)}
+#vm .gauge,#vm .lbl{grid-column:1}
+#vm .gauge{width:200px}
+#sav #vl{margin-top:var(--s2)}
+#vm .gauge .gnum .n{font-size:43px}
 </style>
 
 </head>
@@ -359,7 +361,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 
   <section class="panel next bud" id="sav" data-tab="long" data-closed>
     <h2 style="margin:0">Накопления</h2>
-    <div class="hgrid"><div id="vt"></div><div id="vm"></div></div><div id="vl"></div>
+    <div class="hgrid"><div id="vm"></div></div><div id="vl"></div>
     <form id="vf" class="addf">
       <label class="amt"><span>€</span><input type="number" id="va" step="0.01" inputmode="decimal" placeholder="перевела в копилку" title="Взяла из копилки — сумма с минусом" aria-label="Перевела в копилку, €"></label>
       <div class="addr"><label class="dpill"><span id="vdl">сегодня</span><input type="date" id="vd" aria-label="Дата"></label><button type="submit">В копилку</button></div>
@@ -384,7 +386,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     <h2>Обязательные платежи</h2>
     <form id="df" class="addf">
       <input type="text" id="dn" placeholder="что" aria-label="Название">
-      <label class="amt"><input type="text" id="da" placeholder="сумма, €175 или ₽50 000" aria-label="Сумма"></label>
+      <div class="frow"><label class="amt"><input type="number" id="da" step="0.01" min="0" inputmode="decimal" placeholder="сумма" aria-label="Сумма"></label><label class="dpill"><span id="dcl">€</span><select id="dc" aria-label="Валюта"><option value="EUR">€</option><option value="RUB">₽</option></select></label></div>
       <div class="addr"><label class="dpill"><span id="ddl">дата</span><input type="date" id="dd" aria-label="Дата"></label><button type="submit">Добавить</button></div>
     </form>
     <div class="err" id="derr"></div>
@@ -457,12 +459,14 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   add(2026,10,13,511,'зарплата',[['на жизнь 15 дн. × €23',345],['страховка за октябрь',140]],{kind:'sal',carry:316});
   // Блок-счёт: 21.10.2026 пришёл двойной платёж за сентябрь и октябрь, дальше по €992 26-го до августа 2027. Премии 15.10 не было, следующая — в январе
   add(2026,10,21,1984,'блок-счёт за сентябрь и октябрь',[]);
-  const end=(y,m)=>{const d=dim(y,m)-15, nm=m===12?1:m+1; add(y,m,28,1264,'аванс',[['аренда 1.'+String(nm).padStart(2,'0'),337],['страховка',140],['на жизнь '+d+' дн. × €23',d*L]],{kind:'adv'});};
+  // Аренда и связь — 1-го следующего месяца, платятся из поступления 28-го (связь €20 — с 1.11.2026)
+  const first=(y,m)=>(m===12?y+1:y)+'-'+String(m===12?1:m+1).padStart(2,'0')+'-01', fix=(y,m)=>[['аренда',337,null,first(y,m)],['связь',20,null,first(y,m)]];
+  const end=(y,m)=>{const d=dim(y,m)-15; add(y,m,28,1264,'аванс',fix(y,m).concat([['страховка',140],['на жизнь '+d+' дн. × €23',d*L]]),{kind:'adv'});};
   end(2026,10);
   // С 16.11.2026 работа в России заканчивается, начинается немецкая (неполный день), ~€1 370 в месяц.
   // Ноябрь: 13.11 последняя зарплата, 15.11 премия за квартал и расчёт за 1–15.11 (≈ аванс, допущение), 28.11 первая немецкая зарплата за 16–30.11.
   // С декабря один период в месяц: 28-го немецкая зарплата → аренда, страховка €140 (идёт с октября 2026), жизнь до 27-го следующего месяца, остаток в копилку
-  const de=(y,m,inc,note)=>{const d=dim(y,m), nm=m===12?1:m+1; add(y,m,28,inc,note,[['аренда 1.'+String(nm).padStart(2,'0'),337],['страховка',140],['на жизнь '+d+' дн. × €23',d*L]],{kind:'sal'});};
+  const de=(y,m,inc,note)=>{const d=dim(y,m); add(y,m,28,inc,note,fix(y,m).concat([['страховка',140],['на жизнь '+d+' дн. × €23',d*L]]),{kind:'sal'});};
   for(let y=2026;y<=2028;y++)for(let m=1;m<=12;m++){
     const k=y*100+m; if(k<=202610||k>202809)continue;
     if(k===202611){
@@ -738,7 +742,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       const n=document.getElementById('dn'), a=document.getElementById('da'), d=document.getElementById('dd');
       const name=n.value.trim(); if(!name||!d.value){ derr.textContent='Нужны название и дата.'; return; }
       derr.textContent='';
-      try{ await db.doc('debts/c'+Date.now()).set({name,amount:a.value.trim(),date:d.value,done:false}); n.value=''; a.value=''; d.value=''; syncP(); }
+      try{ await db.doc('debts/c'+Date.now()).set({name,amount:a.value.trim()?(document.getElementById('dc').value==='RUB'?'₽':'€')+a.value.trim():'',date:d.value,done:false}); n.value=''; a.value=''; d.value=''; syncP(); }
       catch(_){ derr.textContent='Не сохранилось, попробуй ещё раз.'; }
     });
     db.collection('debts').onSnapshot(s=>{
@@ -785,7 +789,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     document.getElementById('xd').value=iso(today);
     const xk=document.getElementById('xk'), xl=document.getElementById('xl'); xk.addEventListener('change',()=>{ xl.disabled=!!xk.value; if(xk.value) xl.checked=false; });
     // Пилюли форм «Долгосрока»: поверх подписи прозрачный select или input[type=date], подпись повторяет выбранное
-    const pills=[['xd','xdl'],['xc','xcl'],['xk','xkl'],['dd','ddl']].map(([i,l])=>[document.getElementById(i),document.getElementById(l)]);
+    const pills=[['xd','xdl'],['xc','xcl'],['xk','xkl'],['dd','ddl'],['dc','dcl']].map(([i,l])=>[document.getElementById(i),document.getElementById(l)]);
     function syncP(){ pills.forEach(([i,l])=>{ l.textContent=i.tagName==='SELECT'?i.options[i.selectedIndex].text:!i.value?'дата':i.value===iso(today)?'сегодня':i.value.slice(8)+'.'+i.value.slice(5,7); }); }
     pills.forEach(([i])=>i.addEventListener('change',syncP)); syncP();
     document.getElementById('xf').addEventListener('submit',async e=>{ e.preventDefault();
@@ -847,7 +851,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const li=x=>'<div class="pi"><span><i class="hd">'+x[0]+'</i>'+esc(x[1])+'</span><span>'+money(x[2])+'</span></div>';
     // Неопознанное: разница корректировки «на счету» с расчётом и минус из копилки
     const unk=extras.filter(x=>x.kind==='bal'&&x.calc!=null).map(x=>({date:x.date,a:Math.round(eurOf(x)-x.calc)})).filter(x=>Math.abs(x.a)>=1);
-    let html='', cum=0; cur=null;
+    let html='', cum=0; cur=null; const f0=saves.map(v=>v.date).sort()[0];
     P.forEach((p,i)=>{
       const nx=P[i+1]?P[i+1].from:new Date(p.from.getFullYear(),p.from.getMonth()+1,p.from.getDate()), to=addD(nx,-1);
       const lo=i?iso(p.from):'', hi=P[i+1]?iso(nx):'9999', inP=d=>d>=lo&&d<hi;
@@ -857,13 +861,17 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
           pays.push([x[3]?fd(x[3]):ds(e),cap(x[0]),x[1]]); }); });
       unk.forEach(u=>{ if(!inP(u.date)) return; if(u.a>0) ins.push([fd(u.date),'Неопознанный доход',u.a]); else unks.push([fd(u.date),'Неопознанный расход',-u.a]); });
       saves.forEach(v=>{ if(inP(v.date)&&v.amount<0) unks.push([fd(v.date),'Неопознанный расход из сбережений',-v.amount]); });
+      // Прошлые периоды — сколько реально ушло на жизнь по истории трат (без покупок для переезда: они уже в платежах)
+      let spentP=0; for(const k in spend) if(inP(k)) spentP+=spend[k]; spentP=Math.round(spentP*100)/100;
+      if(nx<=today) lifeS=spentP;
       const inS=sum(ins), payS=sum(pays), unkS=sum(unks), plan=Math.round(inS-lifeS-payS-unkS);
       const fact=Math.round(saves.reduce((t,v)=>t+(inP(v.date)?v.amount:0),0));
       // Не хватает по плану — откладывать нечего: сравнение с нулём
-      const now=p.from<=today&&today<nx, past=nx<=today, goal=Math.max(0,plan), tol=Math.max(1,goal*.1), df=fact-goal;
-      // Плашка: ±10 % от плана — «в плане», больше — «дожали», меньше — «просели»; текущий период до конца не «проседает»
-      const st=past||now?(df>tol?['t-ok','↑ дожали']:df>=-tol?['t-ok','в плане']:now?['t-grey','ещё '+money(-df)]:['t-warn','↓ просели']):null;
-      cum+=past?fact:now?Math.max(fact,plan):plan;
+      // Копилку ведём с первого перевода: прошлые периоды до него без плашки и без «Отложено»
+      const now=p.from<=today&&today<nx, past=nx<=today&&f0&&hi>f0, goal=Math.max(0,plan), tol=Math.max(1,goal*.1), df=fact-goal;
+      // Плашка: ±10 % от плана — ✓, больше — ↑, меньше — ↓; текущий период до конца не «проседает»
+      const st=past||now?(plan<0&&!now?['t-warn','↓']:df>tol?['t-ok','↑']:df>=-tol?['t-ok','✓']:now?null:['t-warn','↓']):null;
+      cum+=nx<=today?fact:now?Math.max(fact,plan):plan;
       if(now) cur={range:dm(p.from)+'–'+dm(to),plan,fact,st};
       const pk=iso(p.from), open=pk in pOpen?pOpen[pk]:now, range=dm(p.from)+'–'+dm(to), yr=p.from.getFullYear();
       const mk=p.from.getFullYear()+'-'+(p.from.getMonth()+1), pmk=i?P[i-1].from.getFullYear()+'-'+(P[i-1].from.getMonth()+1):'';
@@ -874,7 +882,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         '<button type="button" class="ph" data-p="'+pk+'" aria-expanded="'+open+'"><span class="pt">'+range+'</span>'+(now?'<span class="tag">сейчас</span>':'')+tag+
         (st?'<span class="tag '+st[0]+'">'+st[1]+'</span>':'')+'<b>'+(plan<0?'<span class="tag t-warn">−'+money(-plan)+'</span>':'+'+money(plan))+'</b></button>'+
         '<div class="pbd"><div class="pl"><span>Доход</span><b>+'+money(inS)+'</b></div>'+ins.map(li).join('')+
-        '<div class="pl"><span>На жизнь</span><b>−'+money(lifeS)+'</b></div>'+
+        '<div class="pl"><span>На жизнь'+(nx<=today?', по истории':'')+'</span><b>−'+money(lifeS)+'</b></div>'+(now?li(['','потрачено по истории',spentP]):'')+
         (pays.length?'<div class="pl"><span>Обязательные платежи</span><b>−'+money(payS)+'</b></div>'+pays.map(li).join(''):'')+
         (unks.length?'<div class="pl"><span>Неопознанное</span><b>−'+money(unkS)+'</b></div>'+unks.map(li).join(''):'')+
         '<div class="ps">'+(plan>=0?'<div><span>Отложить</span><b>+'+money(plan)+'</b></div>':'<div><span>Не хватает</span><b><span class="tag t-warn">−'+money(-plan)+'</span></b></div>')+'</div>'+
@@ -889,12 +897,11 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   }
   let cur=null;
   const lead2=(l,v)=>'<div class="lead"><span>'+l+'</span><i></i><b>'+v+'</b></div>';
-  const vt=document.getElementById('vt'), vm=document.getElementById('vm'), vl=document.getElementById('vl');
-  // «Накопления»: слева — сколько можно перевести в копилку сейчас (на счету сверх платежей и €L в день до поступления), справа — подкова «накоплено из итога плана»
+  const vm=document.getElementById('vm'), vl=document.getElementById('vl');
+  // «Накопления»: подкова «накоплено из итога плана», переводы в копилку
   function renderSav(){
     const A=acct(), got=Math.round(saves.reduce((t,v)=>t+v.amount,0)), n=v=>Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0');
-    const free=A?Math.max(0,Math.floor(A.free+A.tAfter-L*A.dl)):0, pct=target>0?Math.max(0,Math.min(100,got/target*100)):0, arc='M12 70 A58 58 0 0 1 128 70';
-    vt.innerHTML='<div class="lbl">Можно отложить, €</div><div class="big-n"><span class="n">'+n(free)+'</span></div>';
+    const pct=target>0?Math.max(0,Math.min(100,got/target*100)):0, arc='M12 70 A58 58 0 0 1 128 70';
     vm.innerHTML='<div class="lbl">Накоплено из '+eur(target).replace(/ /g,'\u00a0')+'</div><div class="gauge" role="img" aria-label="Накоплено '+eur(got)+' из '+eur(target)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg><div class="gnum"><span class="n">'+n(got)+'</span></div></div>';
     vl.innerHTML=(A?lead2('На счету сейчас',eur(Math.round(A.bal))):lead2('На счету','внеси в «На счету»'))+
       (cur?lead2('План на '+cur.range,eur(cur.plan))+lead2('Отложено',(cur.st?'<span class="tag '+cur.st[0]+'">'+cur.st[1]+'</span> ':'')+eur(cur.fact)):'');
@@ -909,9 +916,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   // «На счету»: расчёт и корректировки. Разница с расчётом — неопознанный доход или расход в графике
   function renderAcc(){
     const A=acct(), b=document.getElementById('acb');
-    b.innerHTML=A?lead2('По расчёту',eur(Math.round(A.bal)))+(A.reserve?lead2('Из них на платежи до '+dm(A.pn),eur(Math.round(A.reserve))):''):'<p class="sub" style="margin:0">Внеси, сколько сейчас на счету, — от этого считаются «Можно сегодня» и «Можно отложить».</p>';
+    b.innerHTML=A?lead2('По расчёту',eur(Math.round(A.bal)))+lead2('Корректировка '+A.sv.date.slice(8)+'.'+A.sv.date.slice(5,7),eur(Math.round(eurOf(A.sv))))+(A.reserve?lead2('Из них на платежи до '+dm(A.pn),eur(Math.round(A.reserve))):''):'<p class="sub" style="margin:0">Внеси, сколько сейчас на счету, — от этого считаются «Можно сегодня» и «Можно отложить».</p>';
     const tb=document.getElementById('atb'); tb.innerHTML='';
-    extras.filter(x=>x.kind==='bal').sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id)).forEach(x=>{
+    extras.filter(x=>x.kind==='bal'&&x.calc!=null&&Math.round(eurOf(x)-x.calc)).sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id)).forEach(x=>{
       const tr=document.createElement('tr'), c=[0,1,2].map(()=>document.createElement('td')), d=x.calc!=null?Math.round(eurOf(x)-x.calc):0;
       c[0].textContent=x.date.slice(8)+'.'+x.date.slice(5,7);
       c[1].textContent=d<0?'неопознанный расход':d>0?'неопознанный доход':'на счету '+eur(eurOf(x));
