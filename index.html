@@ -958,7 +958,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const li=x=>'<div class="pi"><span><i class="hd">'+x[0]+'</i>'+esc(x[1])+'</span><span>'+money(x[2])+'</span></div>';
     // Неопознанное: разница корректировки «на счету» с расчётом и минус из копилки
     const unk=extras.filter(x=>x.kind==='bal'&&x.calc!=null).map(x=>({date:x.date,a:Math.round(eurOf(x)-x.calc)})).filter(x=>Math.abs(x.a)>=1);
-    let html='', cum=0; cur=null; const f0=saves.map(v=>v.date).sort()[0];
+    let html='', cum=0; cur=null;
     P.forEach((p,i)=>{
       const nx=P[i+1]?P[i+1].from:new Date(p.from.getFullYear(),p.from.getMonth()+1,p.from.getDate()), to=addD(nx,-1);
       const lo=i?iso(p.from):'', hi=P[i+1]?iso(nx):'9999', inP=d=>d>=lo&&d<hi;
@@ -974,8 +974,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       const inS=sum(ins), payS=sum(pays), unkS=sum(unks), plan=Math.round(inS-lifeS-payS-unkS);
       const fact=Math.round(saves.reduce((t,v)=>t+(inP(v.date)?v.amount:0),0));
       // Не хватает по плану — откладывать нечего: сравнение с нулём
-      // Копилку ведём с первого перевода: прошлые периоды до него без плашки и без «Отложено»
-      const now=p.from<=today&&today<nx, past=nx<=today&&f0&&hi>f0, goal=Math.max(0,plan), tol=Math.max(1,goal*.1), df=fact-goal;
+      const now=p.from<=today&&today<nx, past=nx<=today, goal=Math.max(0,plan), tol=Math.max(1,goal*.1), df=fact-goal;
       // Плашка: ±10 % от плана — ✓, больше — ↑, меньше — ↓; текущий период до конца не «проседает»
       const st=past||now?(plan<0&&!now?['t-warn','↓']:df>tol?['t-ok','↑']:df>=-tol?['t-ok','✓']:now?null:['t-warn','↓']):null;
       cum+=nx<=today?fact:now?Math.max(fact,plan):plan;
