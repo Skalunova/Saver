@@ -303,6 +303,19 @@
      "n": "Кофе"
     }
    ]
+  },
+  "2026-10-22": {
+   "amount": 19.7,
+   "items": [
+    {
+     "a": 13,
+     "n": "Карта револют"
+    },
+    {
+     "a": 6.7,
+     "n": "Отвертка и вафли"
+    }
+   ]
   }
  },
  "wishes": {
@@ -434,6 +447,16 @@
   },
   "c1792618883171": {
    "name": "Баня",
+   "price": 100,
+   "done": false
+  },
+  "c1792677513658": {
+   "name": "KIVIK",
+   "price": 400,
+   "done": false
+  },
+  "c1792677927870": {
+   "name": "Боты https://roborro.com/products/elegante-und-trendige-schuhe-mit-quadratischem-absatz",
    "price": 100,
    "done": false
   }
