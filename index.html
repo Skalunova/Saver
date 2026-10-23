@@ -624,7 +624,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       '<div class="gnum">'+num(r2s,'')+'</div></div>';
     // Шильдик — сколько процентов суммы периода (лимит на подкове) уже потрачено; больше 100 % или лимит ≤ 0 — «перерасход»
     const used=lim>0?Math.round(r2s/lim*100):0, tg=lim<=0&&r2s>0||used>100?'<span class="tag t-warn">перерасход</span>':'<span class="tag t-grey">'+used+'\u00a0%</span>';
-    bl.innerHTML=lead('Потрачено '+dm(ps)+'–'+dm(pe),tg)+bl.innerHTML;
+    // Осталось на период = лимит на подкове − потрачено за период; при перерасходе — с минусом
+    const left=Math.round(lim-r2s);
+    bl.innerHTML=lead('Потрачено '+dm(ps)+'–'+dm(pe),tg)+lead('Осталось на '+dm(ps)+'–'+dm(pe),(left<0?'−':'')+eur(Math.abs(left)))+bl.innerHTML;
     const {out,big}=dayOut();
     const hk=[...new Set(Object.keys(spend).filter(k=>spend[k]>0).concat(Object.keys(MOVE).filter(k=>!gone['move-'+k]),Object.keys(big)))].sort();
     const line=(l,v,c)=>'<div><span>'+l+'</span><b'+(c?' class="'+c+'"':'')+'>'+v+'</b></div>';
