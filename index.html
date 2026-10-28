@@ -548,6 +548,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   // платежи (из таблицы — после отметки «оплачено», плановые аренда и страховка — по дате) − переводы в копилку.
   // Отложено на платежи (reserve) — неоплаченные платежи до следующего поступления «на жизнь», включая просроченные.
   // Платежи, оплаченные на момент корректировки (снимок paid; у старых без снимка — с датой до неё), уже учтены в сумме
+  // Сколько придётся взять из копилки до поступления: не хватает на счету на жизнь (€L в день) — добирается из копилки, не больше, чем в ней есть
+  function cover(A){ if(!A) return 0; const box=saves.reduce((t,v)=>t+v.amount,0);
+    return Math.round(Math.max(0,Math.min(box,L*A.dl-(A.free+A.tAfter)))*100)/100; }
   function acct(){
     const T=iso(today), sv=extras.filter(x=>x.kind==='bal'&&x.date<=T).sort((a,b)=>(a.date+a.id).localeCompare(b.date+b.id)).pop(); if(!sv) return null;
     const sd=sv.date, tid=tsOf(sv), aft=x=>x.date>sd||x.date===sd&&tsOf(x)>tid, was=(id,d)=>sv.paid?sv.paid.includes(id):d<sd;
@@ -604,7 +607,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const A=acct();
     let cash=null;
     if(A){
-      const {free,dl,tAfter}=A;
+      const {dl,tAfter}=A, fromBox=cover(A), free=A.free+fromBox;
       // Сверх L в день — копилка: на жизнь до поступления не больше L в день
       cash={free,dl,a:Math.min(L,(free+tAfter)/dl)}; can=Math.round((cash.a-tAfter)*100)/100; lim=Math.round((r2s+Math.max(0,Math.min(free,cash.a*dl-tAfter)))*100)/100;
     }
@@ -615,6 +618,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const sp0=Math.max(0,can), tom=cash&&cash.dl>1?Math.min(L,(cash.free-sp0)/(cash.dl-1)):bal-sp0+L;
     // Меньше MIN € — как и «Можно сегодня», показывается 0
     bl.innerHTML+=lead('Можно завтра',eur(tom>=MIN?Math.floor(tom):0));
+    // Денег на счету не хватает на жизнь до поступления — недостающее берётся из копилки
+    if(A&&cover(A)>0) bl.innerHTML+=lead('Из копилки до '+dm(addD(A.pn,-1)),eur(Math.ceil(cover(A))));
     // Снова можно: от денег на счету — день, когда остаток периода, разложенный по дням, накопится до MIN €; не успевает — с поступления по плану €L
     if(can<MIN&&tom<MIN){ if(cash){ const per=Math.max(0,tom), j=per>0?Math.ceil(MIN/per):Infinity;
         bl.innerHTML+=j<=cash.dl-1?lead('Снова можно с '+dm(addD(today,j)),eur(Math.floor(j*per))):lead('Снова можно с '+dm(pn),eur(L)); } else { const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal); bl.innerHTML+=lead('Снова можно с '+dm(back),eur(rest)); } }
@@ -1014,7 +1019,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const A=acct(), got=Math.round(saves.reduce((t,v)=>t+v.amount,0)), n=v=>Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0');
     const pct=target>0?Math.max(0,Math.min(100,got/target*100)):0, arc='M12 70 A58 58 0 0 1 128 70';
     vm.innerHTML='<div class="lbl">Накоплено из '+eur(target).replace(/ /g,'\u00a0')+'</div><div class="gauge" role="img" aria-label="Накоплено '+eur(got)+' из '+eur(target)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg><div class="gnum"><span class="n">'+n(got)+'</span></div></div>';
-    vl.innerHTML=(A?lead2('На счету сейчас',eur(Math.round(A.bal))):lead2('На счету','внеси в «На счету»'))+
+    vl.innerHTML=(A?lead2('На счету сейчас',eur(Math.round(A.bal))):lead2('На счету','внеси в «На счету»'))+(A&&cover(A)>0?lead2('Уйдёт на жизнь до '+dm(addD(A.pn,-1)),'−'+eur(Math.ceil(cover(A)))):'')+
       (cur?lead2('План на '+cur.range,(cur.plan<0?'−':'')+eur(Math.abs(cur.plan)))+lead2('Отложено',(cur.st?'<span class="tag '+cur.st[0]+'">'+cur.st[1]+'</span> ':'')+(cur.fact<0?'−':'')+eur(Math.abs(cur.fact))):'');
     const tb=document.getElementById('vtb'); tb.innerHTML='';
     saves.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).forEach(v=>{
