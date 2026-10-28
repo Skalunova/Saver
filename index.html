@@ -572,7 +572,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       if(!e.start&&d>sd&&d<=T) bal+=e.inc;
       e.pays.forEach(q=>{ if(/^на жизнь|^закрыть нехватку/.test(q[0])) return; const qd=q[3]||d;
         if(q[5]) return; // из копилки или рублями — деньги не с расчётного счёта
-        if(q[2]){ if(was(q[2],qd)) return; if(q[4]) bal-=q[1]; else if(qd<N) reserve+=q[1]; }
+        // Оплаченный платёж с датой раньше корректировки уже учтён в её сумме
+        if(q[2]){ if(was(q[2],qd)||q[4]&&qd<sd) return; if(q[4]) bal-=q[1]; else if(qd<N) reserve+=q[1]; }
         else if(qd>sd){ if(qd<=T) bal-=q[1]; else if(qd<N) reserve+=q[1]; } }); });
     extras.forEach(x=>{ if(!x.kind&&x.date<=T&&aft(x)) bal+=eurOf(x); });
     let sp=-sv.sp; for(const k in spend) if(k>=sd) sp+=spend[k]; for(const k in MOVE) if(k>=sd&&!gone['move-'+k]) sp+=MOVE[k];
@@ -900,7 +901,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       // Не хватает по плану — откладывать нечего: сравнение с нулём
       const now=p.from<=today&&today<nx, past=nx<=today, goal=Math.max(0,plan), tol=Math.max(1,goal*.1), df=fact-goal;
       // Плашка: ±10 % от плана — ✓, больше — ↑, меньше — ↓; текущий период до конца не «проседает»
-      const st=past||now?(plan<0&&!now?['t-warn','↓']:df>tol?['t-ok','↑']:df>=-tol?['t-ok','✓']:now?null:['t-warn','↓']):null;
+      const st=past||now?(plan<0?(now?null:['t-warn','↓']):df>tol?['t-ok','↑']:df>=-tol?['t-ok','✓']:now?null:['t-warn','↓']):null;
       cum+=nx<=today?fact:now?Math.max(fact,plan):plan;
       if(now) cur={range:dm(p.from)+'–'+dm(to),plan,fact,st};
       const pk=iso(p.from), open=pk in pOpen?pOpen[pk]:now, range=dm(p.from)+'–'+dm(to), yr=p.from.getFullYear();
@@ -930,10 +931,11 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
   const vm=document.getElementById('vm'), vl=document.getElementById('vl');
   // «Накопления»: подкова «накоплено из итога плана», переводы в копилку
   function renderSav(){
-    const A=acct(), got=Math.round(saves.reduce((t,v)=>t+v.amount,0)), n=v=>Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0');
+    // На подкове — сколько останется в копилке после добора на жизнь до поступления; сколько лежит сейчас — строкой ниже
+    const A=acct(), now0=Math.round(saves.reduce((t,v)=>t+v.amount,0)), eat=Math.ceil(cover(A)), got=now0-eat, n=v=>Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0');
     const pct=target>0?Math.max(0,Math.min(100,got/target*100)):0, arc='M12 70 A58 58 0 0 1 128 70';
     vm.innerHTML='<div class="lbl">Накоплено из '+eur(target).replace(/ /g,'\u00a0')+'</div><div class="gauge" role="img" aria-label="Накоплено '+eur(got)+' из '+eur(target)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg><div class="gnum"><span class="n">'+n(got)+'</span></div></div>';
-    vl.innerHTML=(A?lead2('На счету сейчас',eur(Math.round(A.bal))):lead2('На счету','внеси в «На счету»'))+(A&&cover(A)>0?lead2('Уйдёт на жизнь до '+dm(addD(A.pn,-1)),'−'+eur(Math.ceil(cover(A)))):'')+
+    vl.innerHTML=(A?lead2('На счету сейчас',eur(Math.round(A.bal))):lead2('На счету','внеси в «На счету»'))+(eat>0?lead2('Сейчас в копилке',eur(now0))+lead2('Уйдёт на жизнь до '+dm(addD(A.pn,-1)),'−'+eur(eat)):'')+
       (cur?lead2('План на '+cur.range,(cur.plan<0?'−':'')+eur(Math.abs(cur.plan)))+lead2('Отложено',(cur.st?'<span class="tag '+cur.st[0]+'">'+cur.st[1]+'</span> ':'')+(cur.fact<0?'−':'')+eur(Math.abs(cur.fact))):'');
     const tb=document.getElementById('vtb'); tb.innerHTML='';
     saves.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).forEach(v=>{
