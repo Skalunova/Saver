@@ -387,7 +387,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     <form id="df" class="addf">
       <input type="text" id="dn" placeholder="что" aria-label="Название">
       <div class="frow"><label class="amt"><input type="number" id="da" step="0.01" min="0" inputmode="decimal" placeholder="сумма" aria-label="Сумма"></label><label class="dpill"><span id="dcl">€</span><select id="dc" aria-label="Валюта"><option value="EUR">€</option><option value="RUB">₽</option></select></label></div>
-      <div class="addr"><label class="dpill"><span id="ddl">дата</span><input type="date" id="dd" aria-label="Дата"></label><button type="submit">Добавить</button></div>
+      <div class="addr"><label class="dpill"><span id="ddl">дата</span><input type="date" id="dd" aria-label="Дата"></label><label class="dpill"><span id="dsl">со счёта</span><select id="ds" aria-label="Откуда платить"><option value="">со счёта</option><option value="save">из копилки</option></select></label></div>
+      <div class="addr"><span></span><button type="submit">Добавить</button></div>
     </form>
     <div class="err" id="derr"></div>
     <table class="debts" id="dt"><tbody></tbody></table>
@@ -525,7 +526,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const net=[]; for(let y=2026,m=11;y*100+m<=202810;m===12?(y++,m=1):m++) net.push({id:null,name:'связь',amount:20,date:y+'-'+String(m).padStart(2,'0')+'-20',done:false});
     fixed.concat(myDebts,net).forEach(x=>{ const d=new Date(x.date+'T00:00'); if(!(x.amount>0)||!tg.length) return;
       let o=lives[0]; tg.forEach(e=>{ if(e.date<=d) o=e; });
-      o.pays.push([x.name,x.amount,x.id,x.date,x.done]); if(o.start) return;
+      o.pays.push([x.name,x.amount,x.id,x.date,x.done,x.src==='save']); if(o.start) return;
       const c=Math.min(o.save,x.amount); o.save-=c; if(x.amount>c) o.need=(o.need||0)+x.amount-c; });
     // Нехватку поступления «на жизнь» закрывают поступления без жизни в том же периоде (блок-счёт, премия)
     ev.forEach(e=>{ if(e.start||lives.includes(e)||!(e.save>0)) return; let prev=null; lives.forEach(o=>{ if(o.date<=e.date) prev=o; });
@@ -567,6 +568,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     ev.forEach(e=>{ if(e.xid) return; const d=iso(e.date);
       if(!e.start&&d>sd&&d<=T) bal+=e.inc;
       e.pays.forEach(q=>{ if(/^на жизнь|^закрыть нехватку/.test(q[0])) return; const qd=q[3]||d;
+        if(q[5]) return; // из копилки — деньги не с расчётного счёта
         if(q[2]){ if(was(q[2],qd)) return; if(q[4]) bal-=q[1]; else if(qd<N) reserve+=q[1]; }
         else if(qd>sd){ if(qd<=T) bal-=q[1]; else if(qd<N) reserve+=q[1]; } }); });
     extras.forEach(x=>{ if(!x.kind&&x.date<=T&&aft(x)) bal+=eurOf(x); });
@@ -704,7 +706,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       const id=b.dataset.pay, i=document.querySelector('#dt input[data-p="'+id+'"]'), cr=document.querySelector('#dt tr[data-c="'+id+'"]');
       try{ await db.doc('plog/'+id).delete();
         if(i&&i.checked){ i.checked=false; i.closest('tr').classList.remove('paid'); await db.doc('paid/'+id).set(Object.assign({done:false},gone[id]?{del:true}:{})); }
-        else if(cr) await db.doc('debts/'+id).update({done:false}); renderBud(); }
+        else if(cr) await db.doc('debts/'+id).update({done:false});
+        if(saves.some(v=>v.id==='vp-'+id)) await db.doc('save/vp-'+id).delete(); renderBud(); }
       catch(_){ be.textContent='Не сохранилось, попробуй ещё раз.'; } return; }
     const day=b.dataset.day, its=(items[day]||[]).slice(); let tot=spend[day]||0;
     if(b.dataset.ix==='rest'){ tot=its.reduce((s,i)=>s+i.a,0); }
@@ -744,7 +747,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     }));
     const dt=document.getElementById('dt'), derr=document.getElementById('derr');
     // Журнал оплат plog/<id платежа>: {date, name, amount} — строка в истории трат. Галочка «оплачено» пишет строку, снятие галочки стирает
-    async function logPay(id,x){ if(x) await db.doc('plog/'+id).set(x); else if(plog[id]) await db.doc('plog/'+id).delete(); }
+    // Платёж из копилки (src: 'save'): при оплате ещё и списание из копилки save/vp-<id> с пометкой pay
+    async function logPay(id,x,fromSave){ if(x) await db.doc('plog/'+id).set(x); else if(plog[id]) await db.doc('plog/'+id).delete();
+      if(x&&fromSave) await db.doc('save/vp-'+id).set({date:x.date,amount:-fromSave,pay:x.name}); else if(!x&&saves.some(v=>v.id==='vp-'+id)) await db.doc('save/vp-'+id).delete(); }
     // Один раз: всё, что уже отмечено оплаченным (в том числе удалённое из таблицы), — в журнал
     const seen={}; let migrated=false;
     async function migrateLog(){
@@ -760,7 +765,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       const n=document.getElementById('dn'), a=document.getElementById('da'), d=document.getElementById('dd');
       const name=n.value.trim(); if(!name||!d.value){ derr.textContent='Нужны название и дата.'; return; }
       derr.textContent='';
-      try{ await db.doc('debts/c'+Date.now()).set({name,amount:a.value.trim()?(document.getElementById('dc').value==='RUB'?'₽':'€')+a.value.trim():'',date:d.value,done:false}); n.value=''; a.value=''; d.value=''; syncP(); }
+      try{ await db.doc('debts/c'+Date.now()).set({name,amount:a.value.trim()?(document.getElementById('dc').value==='RUB'?'₽':'€')+a.value.trim():'',date:d.value,done:false,src:document.getElementById('ds').value}); n.value=''; a.value=''; d.value=''; document.getElementById('ds').value=''; syncP(); }
       catch(_){ derr.textContent='Не сохранилось, попробуй ещё раз.'; }
     });
     db.collection('debts').onSnapshot(s=>{
@@ -769,14 +774,16 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         const tr=document.createElement('tr'); tr.dataset.c=doc.id; tr.dataset.d=String(x.date); if(x.done) tr.classList.add('paid');
         const p=String(x.date).split('-'), yy=p[0]==='2026'?'':'.'+p[0].slice(2);
         const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!x.done; cb.setAttribute('aria-label','Оплачено: '+x.name);
-        cb.addEventListener('change',async()=>{ tr.classList.toggle('paid',cb.checked); try{ await db.doc('debts/'+doc.id).update({done:cb.checked}); await logPay(doc.id,cb.checked&&{date:String(x.date),name:String(x.name),amount:c[3].textContent}); }catch(_){ cb.checked=!cb.checked; tr.classList.toggle('paid',cb.checked); } });
+        cb.addEventListener('change',async()=>{ tr.classList.toggle('paid',cb.checked); try{ await db.doc('debts/'+doc.id).update({done:cb.checked}); await logPay(doc.id,cb.checked&&{date:String(x.date),name:String(x.name),amount:c[3].textContent},x.src==='save'?money(x.amount):0); }catch(_){ cb.checked=!cb.checked; tr.classList.toggle('paid',cb.checked); } });
         const del=document.createElement('button'); del.type='button'; del.className='x'; del.textContent='×'; del.setAttribute('aria-label','Удалить '+x.name);
         del.addEventListener('click',async()=>{ if(!confirm('Удалить «'+x.name+'»?')) return; try{ if(x.done) await db.doc('debts/'+doc.id).update({del:true}); else await db.doc('debts/'+doc.id).delete(); }catch(_){ derr.textContent='Не удалилось, попробуй ещё раз.'; } });
         const c=[0,1,2,3,4].map(()=>document.createElement('td'));
-        c[0].appendChild(cb); c[1].textContent=x.name; c[3].textContent=x.amount?(/₽/.test(String(x.amount))?String(x.amount).trim():'€'+String(x.amount).replace(/€/g,'').trim()):'—'; c[2].textContent=p[2]+'.'+p[1]+yy; c[4].appendChild(del);
+        c[0].appendChild(cb); c[1].textContent=x.name; if(x.src==='save'){ const t=document.createElement('span'); t.className='tag'; t.textContent='из копилки'; c[1].append(' ',t); } c[3].textContent=x.amount?(/₽/.test(String(x.amount))?String(x.amount).trim():'€'+String(x.amount).replace(/€/g,'').trim()):'—'; c[2].textContent=p[2]+'.'+p[1]+yy; c[4].appendChild(del);
         tr.append(...c); dt.tBodies[0].appendChild(tr);
       });
-      myDebts=s.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(x=>x.name&&/^\d{4}-\d\d-\d\d$/.test(String(x.date))).map(x=>({id:x.id,name:String(x.name),amount:money(x.amount),date:String(x.date),done:!!x.done}));
+      // Разово 28.10.2026: «Долг Веталю» Полина отдаёт из копилки
+      const vt=s.docs.find(d=>d.id==='c1792754886661'); try{ if(vt&&!(vt.data()||{}).src&&!localStorage.getItem('saver-src1')){ localStorage.setItem('saver-src1','1'); db.doc('debts/c1792754886661').update({src:'save'}); return; } }catch(_){ }
+      myDebts=s.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(x=>x.name&&/^\d{4}-\d\d-\d\d$/.test(String(x.date))).map(x=>({id:x.id,name:String(x.name),amount:money(x.amount),date:String(x.date),done:!!x.done,src:x.src==='save'?'save':''}));
       sortRows(); build(); renderBud(); renderPlan(); seen.debts=s.docs; migrateLog();
     }, ()=>{ derr.textContent='Не удалось загрузить свои платежи. Обнови страницу.'; });
     db.collection('paid').onSnapshot(s=>{ const m={}; gone={}; s.docs.forEach(d=>{ const x=d.data()||{}; m[d.id]=!!x.done; if(x.del) gone[d.id]=true; }); payDone=m; seen.paid=true; document.querySelectorAll('.debts input[data-p]').forEach(i=>{i.checked=!!m[i.dataset.p]; i.closest('tr').classList.toggle('paid',i.checked);}); document.querySelectorAll('.debts input[data-p]').forEach(i=>{ i.closest('tr').hidden=!!gone[i.dataset.p]; });
@@ -808,7 +815,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     document.getElementById('xd').value=iso(today);
     const xk=document.getElementById('xk'), xl=document.getElementById('xl'); xk.addEventListener('change',()=>{ xl.disabled=!!xk.value; if(xk.value) xl.checked=false; });
     // Пилюли форм «Долгосрока»: поверх подписи прозрачный select или input[type=date], подпись повторяет выбранное
-    const pills=[['xd','xdl'],['xc','xcl'],['xk','xkl'],['dd','ddl'],['dc','dcl']].map(([i,l])=>[document.getElementById(i),document.getElementById(l)]);
+    const pills=[['xd','xdl'],['xc','xcl'],['xk','xkl'],['dd','ddl'],['dc','dcl'],['ds','dsl']].map(([i,l])=>[document.getElementById(i),document.getElementById(l)]);
     function syncP(){ pills.forEach(([i,l])=>{ l.textContent=i.tagName==='SELECT'?i.options[i.selectedIndex].text:!i.value?'дата':i.value===iso(today)?'сегодня':i.value.slice(8)+'.'+i.value.slice(5,7); }); }
     pills.forEach(([i])=>i.addEventListener('change',syncP)); syncP();
     document.getElementById('xf').addEventListener('submit',async e=>{ e.preventDefault();
@@ -836,7 +843,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       });
       if(!extras.length) xt.innerHTML='<tr><td class="sub">Пока ничего</td></tr>';
     }, ()=>{ xerr.textContent='Не удалось загрузить поступления. Обнови страницу.'; });
-    db.collection('save').onSnapshot(s=>{ saves=[]; s.docs.forEach(d=>{ const x=d.data()||{}, a=Number(x.amount); if(x.date&&a) saves.push({id:d.id,date:String(x.date),amount:a}); }); renderBud(); },
+    db.collection('save').onSnapshot(s=>{ saves=[]; s.docs.forEach(d=>{ const x=d.data()||{}, a=Number(x.amount); if(x.date&&a) saves.push({id:d.id,date:String(x.date),amount:a,pay:x.pay?String(x.pay):''}); }); renderBud(); },
       ()=>{ document.getElementById('verr').textContent='Не удалось загрузить накопления. Обнови страницу.'; });
     const vd=document.getElementById('vd'), vdl=document.getElementById('vdl'); vd.value=iso(today);
     const syncV=()=>{ vdl.textContent=vd.value===iso(today)?'сегодня':vd.value.slice(8)+'.'+vd.value.slice(5,7); }; vd.addEventListener('change',syncV);
@@ -866,7 +873,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     ev.forEach(e=>{ const c=P[P.length-1];
       if(!c||(life(e)&&!e.xid&&+c.evs[0].date!==+e.date)) P.push({from:new Date(e.date),evs:[e]}); else c.evs.push(e); });
     if(P[0].from>START) P[0].from=new Date(START);
-    const money=v=>eur(Math.round(v*100)/100), fd=d=>d.slice(8)+'.'+d.slice(5,7), sum=a=>a.reduce((t,x)=>t+x[2],0);
+    const money=v=>(v<0?'−':'')+eur(Math.abs(Math.round(v*100)/100)), fd=d=>d.slice(8)+'.'+d.slice(5,7), sum=a=>a.reduce((t,x)=>t+x[2],0);
     const li=x=>'<div class="pi"><span><i class="hd">'+x[0]+'</i>'+esc(x[1])+'</span><span>'+money(x[2])+'</span></div>';
     // Неопознанное: разница корректировки «на счету» с расчётом и минус из копилки
     const unk=extras.filter(x=>x.kind==='bal'&&x.calc!=null).map(x=>({date:x.date,a:Math.round(eurOf(x)-x.calc)})).filter(x=>Math.abs(x.a)>=1);
@@ -879,7 +886,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         e.pays.forEach(x=>{ if(/^закрыть нехватку/.test(x[0])) return; if(/^на жизнь|^в лимит на жизнь/.test(x[0])){ lifeS+=x[1]; return; }
           pays.push([x[3]?fd(x[3]):ds(e),cap(x[0]),x[1]]); }); });
       unk.forEach(u=>{ if(!inP(u.date)) return; if(u.a>0) ins.push([fd(u.date),'Неопознанный доход',u.a]); else unks.push([fd(u.date),'Неопознанный расход',-u.a]); });
-      saves.forEach(v=>{ if(inP(v.date)&&v.amount<0) unks.push([fd(v.date),'Неопознанный расход из сбережений',-v.amount]); });
+      saves.forEach(v=>{ if(inP(v.date)&&v.amount<0&&!v.pay) unks.push([fd(v.date),'Неопознанный расход из сбережений',-v.amount]); });
       // Прошлые периоды — сколько реально ушло на жизнь по истории трат (без покупок для переезда: они уже в платежах)
       let spentP=0; for(const k in spend) if(inP(k)) spentP+=spend[k]; spentP=Math.round(spentP*100)/100;
       if(nx<=today) lifeS=spentP;
@@ -922,11 +929,11 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const pct=target>0?Math.max(0,Math.min(100,got/target*100)):0, arc='M12 70 A58 58 0 0 1 128 70';
     vm.innerHTML='<div class="lbl">Накоплено из '+eur(target).replace(/ /g,'\u00a0')+'</div><div class="gauge" role="img" aria-label="Накоплено '+eur(got)+' из '+eur(target)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg><div class="gnum"><span class="n">'+n(got)+'</span></div></div>';
     vl.innerHTML=(A?lead2('На счету сейчас',eur(Math.round(A.bal))):lead2('На счету','внеси в «На счету»'))+
-      (cur?lead2('План на '+cur.range,eur(cur.plan))+lead2('Отложено',(cur.st?'<span class="tag '+cur.st[0]+'">'+cur.st[1]+'</span> ':'')+eur(cur.fact)):'');
+      (cur?lead2('План на '+cur.range,(cur.plan<0?'−':'')+eur(Math.abs(cur.plan)))+lead2('Отложено',(cur.st?'<span class="tag '+cur.st[0]+'">'+cur.st[1]+'</span> ':'')+(cur.fact<0?'−':'')+eur(Math.abs(cur.fact))):'');
     const tb=document.getElementById('vtb'); tb.innerHTML='';
     saves.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).forEach(v=>{
       const tr=document.createElement('tr'), c=[0,1,2].map(()=>document.createElement('td'));
-      c[0].textContent=v.date.slice(8)+'.'+v.date.slice(5,7); c[1].textContent=v.amount<0?'из копилки':'в копилку'; c[2].textContent=(v.amount<0?'−':'')+eur(Math.abs(v.amount));
+      c[0].textContent=v.date.slice(8)+'.'+v.date.slice(5,7); c[1].textContent=v.pay?v.pay+', из копилки':v.amount<0?'из копилки':'в копилку'; c[2].textContent=(v.amount<0?'−':'')+eur(Math.abs(v.amount));
       const x=document.createElement('button'); x.type='button'; x.className='x'; x.textContent='×'; x.setAttribute('aria-label','Удалить перевод');
       x.addEventListener('click',async()=>{ if(!db||!confirm('Удалить перевод '+c[2].textContent+'?')) return; try{ await db.doc('save/'+v.id).delete(); }catch(_){ document.getElementById('verr').textContent='Не удалилось, попробуй ещё раз.'; } });
       c[2].appendChild(x); tr.append(...c); tb.appendChild(tr); });
