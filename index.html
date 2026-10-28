@@ -847,7 +847,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     });
     db.collection('extra').onSnapshot(s=>{
       extras=[]; s.docs.forEach(d=>{const x=d.data()||{}; const a=Number(x.amount); if(x.date&&(a>0||x.kind==='bal'&&a>=0)) extras.push({id:d.id,acc:x.acc==='rub'?'rub':'',date:String(x.date),amount:a,cur:x.cur==='EUR'?'EUR':'RUB',note:x.note?String(x.note):'',life:x.life===true,sp:Number(x.sp)||0,paid:Array.isArray(x.paid)?x.paid:null,calc:x.calc!=null&&!isNaN(Number(x.calc))?Number(x.calc):null,kind:['sal','adv','bal'].includes(x.kind)?x.kind:d.id==='x20260928a'?'adv':''});});
-      build(); renderPlan(); renderBud(); migrateX5();
+      build(); renderPlan(); renderBud(); migrateX5(); repairX5();
       xt.innerHTML='';
       extras.filter(x=>x.kind!=='bal').sort((a,b)=>b.date.localeCompare(a.date)).forEach(x=>{
         const tr=document.createElement('tr'), p=x.date.split('-');
@@ -862,6 +862,10 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     }, ()=>{ xerr.textContent='Не удалось загрузить поступления. Обнови страницу.'; });
     // Разово 28.10.2026: аванс X5 пришёл в рублях (145 000 ₽ — долг Веталю). Расчёт корректировки 28.10 считал его на евро-счёте
     let fixX5=false;
+    // Разово 28.10.2026: migrateX5 ошибочно уменьшил на €1 380 расчёт у корректировок 28.10, внесённых уже после аванса в рублях, — вернуть
+    let fixX5b=false;
+    function repairX5(){ if(fixX5b) return; fixX5b=true; try{ if(localStorage.getItem('saver-x5b')) return; localStorage.setItem('saver-x5b','1'); }catch(_){ return; }
+      extras.filter(x=>x.kind==='bal'&&x.date==='2026-10-28'&&x.calc!=null&&x.calc<0).forEach(x=>db.doc('extra/'+x.id).update({calc:Math.round((x.calc+1380)*100)/100})); }
     function migrateX5(){ if(fixX5) return; try{ if(localStorage.getItem('saver-x5')) { fixX5=true; return; } }catch(_){ }
       const adv=extras.find(x=>x.kind==='adv'&&x.date==='2026-10-28'&&!x.acc); if(!adv) return; fixX5=true;
       try{ localStorage.setItem('saver-x5','1'); }catch(_){ }
