@@ -352,6 +352,9 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 /* Заголовок периода: даты одной ширины, значок ✓ ↑ ↓ — в своей колонке, сумма справа */
 .ph .pt{flex:none;font-variant-numeric:tabular-nums}
 .ph .pst{flex:none;width:24px;display:flex}
+/* Текущий период — даты на голубой подложке главного блока вместо шильдика «сейчас»; поля съедены отрицательными отступами, колонка значков не сдвигается */
+.per.now .ph .pt{background:var(--hero);color:var(--hero-ink);border-radius:999px;padding:2px 8px;margin:0 -8px}
+.per.now .ph .pt::after{color:inherit;opacity:.6}
 .ph b{margin-left:auto;flex:none}
 .ph .ptg{display:flex;gap:4px;min-width:0;overflow:hidden}
 .ph .ptg .tag{margin-left:0;min-width:0;overflow:hidden;text-overflow:ellipsis}
@@ -1004,7 +1007,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       // Год — заголовком перед первым периодом года, в датах периодов года нет
       if(!i||P[i-1].from.getFullYear()!==yr) html+='<div class="yr">'+yr+'</div>';
       html+='<div class="per'+(now?' now':'')+(open?'':' closed')+'">'+
-        '<button type="button" class="ph" data-p="'+pk+'" aria-expanded="'+open+'"><span class="pt">'+range+'</span><span class="pst">'+(st?'<span class="tag '+st[0]+'">'+st[1]+'</span>':'')+'</span><span class="ptg">'+(now?'<span class="tag">сейчас</span>':'')+tag+'</span>'+
+        '<button type="button" class="ph" data-p="'+pk+'" aria-expanded="'+open+'"><span class="pt">'+range+'</span><span class="pst">'+(st?'<span class="tag '+st[0]+'">'+st[1]+'</span>':'')+'</span><span class="ptg">'+tag+'</span>'+
         '<b>'+(plan<0?'−'+money(-plan):'+'+money(plan))+'</b></button>'+
         '<div class="pbd"><div class="pl"><span>Доход</span><b>+'+money(inS)+'</b></div>'+ins.map(li).join('')+
         '<div class="pl"><span>На жизнь'+(nx<=today?', по истории':'')+'</span><b>−'+money(lifeS)+'</b></div>'+(now?li(['','потрачено по истории',spentP]):'')+
