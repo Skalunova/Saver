@@ -407,7 +407,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     <form id="xf" class="addf">
       <div class="frow"><label class="amt"><span>€</span><input type="number" id="xa" step="0.01" inputmode="decimal" placeholder="сумма" aria-label="Сумма, €"></label></div>
       <input type="text" id="xn" placeholder="откуда, 1–2 слова" maxlength="24" aria-label="Откуда">
-      <div class="addr"><label class="dpill"><span id="xdl">сегодня</span><input type="date" id="xd" aria-label="Дата"></label><label class="dpill"><span id="xkl">доп. деньги</span><select id="xk" aria-label="Что пришло"><option value="">доп. деньги</option><option value="sal">зарплата</option></select></label></div>
+      <div class="addr"><label class="dpill"><span id="xdl">сегодня</span><input type="date" id="xd" aria-label="Дата"></label><label class="dpill"><span id="xkl">доп. деньги</span><select id="xk" aria-label="Что пришло"><option value="">доп. деньги</option><option value="sal">зарплата</option></select></label><label class="dpill"><span id="xrl">на счёт</span><select id="xr" aria-label="Куда пришло"><option value="">на счёт</option><option value="rub">на другой счёт</option></select></label></div>
       <div class="addr"><label class="ck"><input type="checkbox" id="xl">на жизнь</label><button type="submit">Добавить</button></div>
     </form>
     <div class="err" id="xerr"></div>
@@ -512,7 +512,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     extras.filter(x=>x.kind==='bal').forEach(x=>{ const d=new Date(x.date+'T00:00'), o=ev.filter(e=>isLv(e)&&e.date>d).sort((a,b)=>a.date-b.date)[0]; if(o) o.carry=0; });
     extras.filter(x=>x.kind==='sal'||x.kind==='adv').forEach(x=>{ const d=new Date(x.date+'T00:00'); let o=null;
       ev.forEach(e=>{ if(e.kind===x.kind&&(!o||Math.abs(e.date-d)<Math.abs(o.date-d))) o=e; });
-      if(o) o.fact=(o.fact||0)+toEur(x); });
+      if(o){ o.fact=(o.fact||0)+toEur(x); if(x.acc==='rub') o.rubIn=(o.rubIn||0)+toEur(x); } });
     ev.forEach(e=>{ const got=e.fact!=null?e.fact:e.plan, w=e.kind?e.incNote:'';
       e.inc=e.carry+got;
       if(w) e.incNote=(e.carry?'остаток '+e.carry+' + ':'')+w+(e.fact!=null?' '+got+(got!==e.plan?' (план '+e.plan+')':''):e.carry?' ~'+got:'');
@@ -568,13 +568,13 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const [,pn]=perOf(today), N=iso(pn), dl=Math.max(1,Math.round((pn-today)/864e5));
     let bal=eurOf(sv), reserve=0;
     ev.forEach(e=>{ if(e.xid) return; const d=iso(e.date);
-      if(!e.start&&d>sd&&d<=T) bal+=e.inc;
+      if(!e.start&&d>sd&&d<=T) bal+=e.inc-(e.rubIn||0); // пришедшее на другой счёт на расчётный не попадает
       e.pays.forEach(q=>{ if(/^на жизнь|^закрыть нехватку/.test(q[0])) return; const qd=q[3]||d;
         if(q[5]) return; // из копилки или с другого счёта — деньги не с расчётного счёта
         // Оплаченный платёж с датой раньше корректировки уже учтён в её сумме
         if(q[2]){ if(was(q[2],qd)||q[4]&&qd<sd) return; if(q[4]) bal-=q[1]; else if(qd<N) reserve+=q[1]; }
         else if(qd>sd){ if(qd<=T) bal-=q[1]; else if(qd<N) reserve+=q[1]; } }); });
-    extras.forEach(x=>{ if(!x.kind&&x.date<=T&&aft(x)) bal+=eurOf(x); });
+    extras.forEach(x=>{ if(!x.kind&&x.acc!=='rub'&&x.date<=T&&aft(x)) bal+=eurOf(x); });
     let sp=-sv.sp; for(const k in spend) if(k>=sd) sp+=spend[k]; for(const k in MOVE) if(k>=sd&&!gone['move-'+k]) sp+=MOVE[k];
     // Перевод в копилку уменьшает счёт; минус без pay — из копилки на счёт, счёт растёт; списания за платежи из копилки (pay) счёт не трогают
     bal-=sp; saves.forEach(v=>{ if(!v.pay&&aft(v)) bal-=v.amount; });
@@ -818,7 +818,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     document.getElementById('xd').value=iso(today);
     const xk=document.getElementById('xk'), xl=document.getElementById('xl'); xk.addEventListener('change',()=>{ xl.disabled=!!xk.value; if(xk.value) xl.checked=false; });
     // Пилюли форм «Долгосрока»: поверх подписи прозрачный select или input[type=date], подпись повторяет выбранное
-    const pills=[['xd','xdl'],['xk','xkl'],['dd','ddl'],['ds','dsl']].map(([i,l])=>[document.getElementById(i),document.getElementById(l)]);
+    const pills=[['xd','xdl'],['xk','xkl'],['xr','xrl'],['dd','ddl'],['ds','dsl']].map(([i,l])=>[document.getElementById(i),document.getElementById(l)]);
     function syncP(){ pills.forEach(([i,l])=>{ l.textContent=i.tagName==='SELECT'?i.options[i.selectedIndex].text:!i.value?'дата':i.value===iso(today)?'сегодня':i.value.slice(8)+'.'+i.value.slice(5,7); }); }
     pills.forEach(([i])=>i.addEventListener('change',syncP)); syncP();
     document.getElementById('xf').addEventListener('submit',async e=>{ e.preventDefault();
@@ -828,17 +828,17 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       xerr.textContent='';
       const lf=document.getElementById('xl'), k=document.getElementById('xk');
       const snap={};
-      try{ await db.doc('extra/x'+Date.now()).set(Object.assign({date:d.value,amount,note:nt.value.trim(),life:!k.value&&lf.checked,kind:k.value},snap)); a.value=''; nt.value=''; lf.checked=false; lf.disabled=false; k.value=''; syncP(); }
+      try{ await db.doc('extra/x'+Date.now()).set(Object.assign({date:d.value,amount,note:nt.value.trim(),life:!k.value&&lf.checked,kind:k.value,acc:document.getElementById('xr').value},snap)); document.getElementById('xr').value=''; a.value=''; nt.value=''; lf.checked=false; lf.disabled=false; k.value=''; syncP(); }
       catch(_){ xerr.textContent='Не сохранилось, попробуй ещё раз.'; }
     });
     db.collection('extra').onSnapshot(s=>{
-      extras=[]; s.docs.forEach(d=>{const x=d.data()||{}; const a=Number(x.amount); if(x.date&&(a>0||x.kind==='bal'&&a>=0)) extras.push({id:d.id,date:String(x.date),amount:a,note:x.note?String(x.note):'',life:x.life===true,sp:Number(x.sp)||0,paid:Array.isArray(x.paid)?x.paid:null,calc:x.calc!=null&&!isNaN(Number(x.calc))?Number(x.calc):null,kind:['sal','bal'].includes(x.kind)?x.kind:''});});
+      extras=[]; s.docs.forEach(d=>{const x=d.data()||{}; const a=Number(x.amount); if(x.date&&(a>0||x.kind==='bal'&&a>=0)) extras.push({id:d.id,acc:x.acc==='rub'?'rub':'',date:String(x.date),amount:a,note:x.note?String(x.note):'',life:x.life===true,sp:Number(x.sp)||0,paid:Array.isArray(x.paid)?x.paid:null,calc:x.calc!=null&&!isNaN(Number(x.calc))?Number(x.calc):null,kind:['sal','bal'].includes(x.kind)?x.kind:''});});
       build(); renderPlan(); renderBud();
       xt.innerHTML='';
       extras.filter(x=>x.kind!=='bal').sort((a,b)=>b.date.localeCompare(a.date)).forEach(x=>{
         const tr=document.createElement('tr'), p=x.date.split('-');
         const c=[0,1,2].map(()=>document.createElement('td'));
-        c[0].textContent=p[2]+'.'+p[1]; const kw=x.kind==='sal'?'зарплата':x.kind==='bal'?'на счету':x.life?'на жизнь':''; c[1].textContent=(x.note||kw||'поступление')+(kw&&x.note&&!x.note.toLowerCase().includes(kw)?', '+kw:'');
+        c[0].textContent=p[2]+'.'+p[1]; const kw=x.kind==='sal'?'зарплата':x.kind==='bal'?'на счету':x.life?'на жизнь':''; c[1].textContent=(x.acc==='rub'?'другой счёт, ':'')+(x.note||kw||'поступление')+(kw&&x.note&&!x.note.toLowerCase().includes(kw)?', '+kw:'');
         c[2].textContent=eur(eurOf(x));
         const del=document.createElement('button'); del.type='button'; del.className='x'; del.textContent='×'; del.setAttribute('aria-label','Удалить');
         del.addEventListener('click',async()=>{ try{ await db.doc('extra/'+x.id).delete(); }catch(_){ xerr.textContent='Не удалилось, попробуй ещё раз.'; } });
