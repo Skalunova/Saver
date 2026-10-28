@@ -384,7 +384,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     <h2 style="margin:0">Накопления</h2>
     <div class="hgrid"><div id="vm"></div></div><div id="vl"></div>
     <form id="vf" class="addf">
-      <label class="amt"><span>€</span><input type="number" id="va" step="0.01" inputmode="decimal" placeholder="перевела в копилку" title="Взяла из копилки — сумма с минусом" aria-label="Перевела в копилку, €"></label>
+      <label class="amt"><span>€</span><input type="number" id="va" step="0.01" inputmode="decimal" placeholder="перевела в копилку" title="С минусом — из копилки на счёт" aria-label="Перевела в копилку, €"></label>
       <div class="addr"><label class="dpill"><span id="vdl">сегодня</span><input type="date" id="vd" aria-label="Дата"></label><button type="submit">В копилку</button></div>
     </form>
     <div class="err" id="verr"></div>
@@ -408,7 +408,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     <form id="df" class="addf">
       <input type="text" id="dn" placeholder="что" aria-label="Название">
       <label class="amt"><span>€</span><input type="number" id="da" step="0.01" inputmode="decimal" placeholder="сумма" aria-label="Сумма, €"></label>
-      <div class="addr"><label class="dpill"><span id="ddl">дата</span><input type="date" id="dd" aria-label="Дата"></label><label class="dpill"><span id="dsl">со счёта</span><select id="ds" aria-label="Откуда платить"><option value="">со счёта</option><option value="save">из копилки</option></select></label></div>
+      <div class="addr"><label class="dpill"><span id="ddl">дата</span><input type="date" id="dd" aria-label="Дата"></label><label class="dpill"><span id="dsl">со счёта</span><select id="ds" aria-label="Откуда платить"><option value="">со счёта</option><option value="save">из копилки</option><option value="rub">с другого счёта</option></select></label></div>
       <div class="addr"><span></span><button type="submit">Добавить</button></div>
     </form>
     <div class="err" id="derr"></div>
@@ -512,7 +512,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const fixed=PAYS.filter(x=>!gone[x[0]]||payDone[x[0]]).map(([id,name,a,date])=>{ const i=document.querySelector('#dt input[data-p="'+id+'"]'); return {id,name,amount:money(a),date,done:!!(i&&i.checked)}; });
     fixed.concat(myDebts).forEach(x=>{ const d=new Date(x.date+'T00:00'); if(!(x.amount>0)||!tg.length) return;
       let o=lives[0]; tg.forEach(e=>{ if(e.date<=d) o=e; });
-      o.pays.push([x.name,x.amount,x.id,x.date,x.done,x.src==='save']); if(o.start) return;
+      o.pays.push([x.name,x.amount,x.id,x.date,x.done,!!x.src]); if(o.start) return;
       const c=Math.min(o.save,x.amount); o.save-=c; if(x.amount>c) o.need=(o.need||0)+x.amount-c; });
     // Нехватку поступления «на жизнь» закрывают поступления без жизни в том же периоде (разовые поступления)
     ev.forEach(e=>{ if(e.start||lives.includes(e)||!(e.save>0)) return; let prev=null; lives.forEach(o=>{ if(o.date<=e.date) prev=o; });
@@ -556,12 +556,13 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     ev.forEach(e=>{ if(e.xid) return; const d=iso(e.date);
       if(!e.start&&d>sd&&d<=T) bal+=e.inc;
       e.pays.forEach(q=>{ if(/^на жизнь|^закрыть нехватку/.test(q[0])) return; const qd=q[3]||d;
-        if(q[5]) return; // из копилки — деньги не с расчётного счёта
+        if(q[5]) return; // из копилки или с другого счёта — деньги не с расчётного счёта
         if(q[2]){ if(was(q[2],qd)) return; if(q[4]) bal-=q[1]; else if(qd<N) reserve+=q[1]; }
         else if(qd>sd){ if(qd<=T) bal-=q[1]; else if(qd<N) reserve+=q[1]; } }); });
     extras.forEach(x=>{ if(!x.kind&&x.date<=T&&aft(x)) bal+=eurOf(x); });
     let sp=-sv.sp; for(const k in spend) if(k>=sd) sp+=spend[k]; for(const k in MOVE) if(k>=sd&&!gone['move-'+k]) sp+=MOVE[k];
-    bal-=sp; saves.forEach(v=>{ if(v.amount>0&&aft(v)) bal-=v.amount; });
+    // Перевод в копилку уменьшает счёт; минус без pay — из копилки на счёт, счёт растёт; списания за платежи из копилки (pay) счёт не трогают
+    bal-=sp; saves.forEach(v=>{ if(!v.pay&&aft(v)) bal-=v.amount; });
     bal=Math.round(bal*100)/100; reserve=Math.round(reserve*100)/100;
     return {sv,bal,reserve,free:Math.round((bal-reserve)*100)/100,dl,pn,tAfter:(spend[T]||0)-(sd===T?sv.sp:0)};
   }
@@ -767,10 +768,10 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         const del=document.createElement('button'); del.type='button'; del.className='x'; del.textContent='×'; del.setAttribute('aria-label','Удалить '+x.name);
         del.addEventListener('click',async()=>{ if(!confirm('Удалить «'+x.name+'»?')) return; try{ if(x.done) await db.doc('debts/'+doc.id).update({del:true}); else await db.doc('debts/'+doc.id).delete(); }catch(_){ derr.textContent='Не удалилось, попробуй ещё раз.'; } });
         const c=[0,1,2,3,4].map(()=>document.createElement('td'));
-        c[0].appendChild(cb); c[1].textContent=x.name; if(x.src==='save'){ const t=document.createElement('span'); t.className='tag'; t.textContent='из копилки'; c[1].append(' ',t); } c[3].textContent=money(x.amount)?eur(money(x.amount)):'—'; c[2].textContent=p[2]+'.'+p[1]+yy; c[4].appendChild(del);
+        c[0].appendChild(cb); c[1].textContent=x.name; if(x.src==='save'||x.src==='rub'){ const t=document.createElement('span'); t.className='tag'; t.textContent=x.src==='rub'?'другой счёт':'из копилки'; c[1].append(' ',t); } c[3].textContent=money(x.amount)?eur(money(x.amount)):'—'; c[2].textContent=p[2]+'.'+p[1]+yy; c[4].appendChild(del);
         tr.append(...c); dt.tBodies[0].appendChild(tr);
       });
-      myDebts=s.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(x=>x.name&&/^\d{4}-\d\d-\d\d$/.test(String(x.date))).map(x=>({id:x.id,name:String(x.name),amount:money(x.amount),date:String(x.date),done:!!x.done,src:x.src==='save'?'save':''}));
+      myDebts=s.docs.map(d=>Object.assign({id:d.id},d.data()||{})).filter(x=>x.name&&/^\d{4}-\d\d-\d\d$/.test(String(x.date))).map(x=>({id:x.id,name:String(x.name),amount:money(x.amount),date:String(x.date),done:!!x.done,src:['save','rub'].includes(x.src)?x.src:''}));
       sortRows(); build(); renderBud(); renderPlan(); seen.debts=s.docs; migrateLog();
     }, ()=>{ derr.textContent='Не удалось загрузить свои платежи. Обнови страницу.'; });
     db.collection('paid').onSnapshot(s=>{ const m={}; gone={}; s.docs.forEach(d=>{ const x=d.data()||{}; m[d.id]=!!x.done; if(x.del) gone[d.id]=true; }); payDone=m; seen.paid=true; document.querySelectorAll('.debts input[data-p]').forEach(i=>{i.checked=!!m[i.dataset.p]; i.closest('tr').classList.toggle('paid',i.checked);}); document.querySelectorAll('.debts input[data-p]').forEach(i=>{ i.closest('tr').hidden=!!gone[i.dataset.p]; });
@@ -972,7 +973,6 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
         e.pays.forEach(x=>{ if(/^закрыть нехватку/.test(x[0])) return; if(/^на жизнь|^в лимит на жизнь/.test(x[0])){ lifeS+=x[1]; return; }
           pays.push([x[3]?fd(x[3]):ds(e),cap(x[0]),x[1]]); }); });
       unk.forEach(u=>{ if(!inP(u.date)) return; if(u.a>0) ins.push([fd(u.date),'Неопознанный доход',u.a]); else unks.push([fd(u.date),'Неопознанный расход',-u.a]); });
-      saves.forEach(v=>{ if(inP(v.date)&&v.amount<0&&!v.pay) unks.push([fd(v.date),'Неопознанный расход из сбережений',-v.amount]); });
       // Прошлые периоды — сколько реально ушло на жизнь по истории трат (без покупок для переезда: они уже в платежах)
       let spentP=0; for(const k in spend) if(inP(k)) spentP+=spend[k]; spentP=Math.round(spentP*100)/100;
       if(nx<=today) lifeS=spentP;
@@ -1019,7 +1019,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const tb=document.getElementById('vtb'); tb.innerHTML='';
     saves.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).forEach(v=>{
       const tr=document.createElement('tr'), c=[0,1,2].map(()=>document.createElement('td'));
-      c[0].textContent=v.date.slice(8)+'.'+v.date.slice(5,7); c[1].textContent=v.pay?v.pay+', из копилки':v.amount<0?'из копилки':'в копилку'; c[2].textContent=(v.amount<0?'−':'')+eur(Math.abs(v.amount));
+      c[0].textContent=v.date.slice(8)+'.'+v.date.slice(5,7); c[1].textContent=v.pay?v.pay+', из копилки':v.amount<0?'из копилки на счёт':'в копилку'; c[2].textContent=(v.amount<0?'−':'')+eur(Math.abs(v.amount));
       const x=document.createElement('button'); x.type='button'; x.className='x'; x.textContent='×'; x.setAttribute('aria-label','Удалить перевод');
       x.addEventListener('click',async()=>{ if(!db||!confirm('Удалить перевод '+c[2].textContent+'?')) return; try{ await db.doc('save/'+v.id).delete(); }catch(_){ document.getElementById('verr').textContent='Не удалилось, попробуй ещё раз.'; } });
       c[2].appendChild(x); tr.append(...c); tb.appendChild(tr); });
