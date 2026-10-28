@@ -348,6 +348,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #vm .gauge,#vm .lbl{grid-column:1}
 #vm .gauge{width:200px}
 #sav #vl{margin-top:var(--s2)}
+#sav #vl:empty{display:none}
 #vm .gauge .gnum .n{font-size:43px}
 /* Заголовок периода: даты одной ширины, значок ✓ ↑ ↓ — в своей колонке, сумма справа */
 .ph .pt{flex:none;font-variant-numeric:tabular-nums}
@@ -629,8 +630,6 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const sp0=Math.max(0,can), tom=cash&&cash.dl>1?Math.min(L,(cash.free-sp0)/(cash.dl-1)):bal-sp0+L;
     // Меньше MIN € — как и «Можно сегодня», показывается 0
     bl.innerHTML+=lead('Можно завтра',eur(tom>=MIN?Math.floor(tom):0));
-    // Денег на счету не хватает на жизнь до поступления — недостающее берётся из копилки
-    if(A&&cover(A)>0) bl.innerHTML+=lead('Из копилки до '+dm(addD(A.pn,-1)),eur(Math.ceil(cover(A))));
     // Снова можно: от денег на счету — день, когда остаток периода, разложенный по дням, накопится до MIN €; не успевает — с поступления по плану €L
     if(can<MIN&&tom<MIN){ if(cash){ const per=Math.max(0,tom), j=per>0?Math.ceil(MIN/per):Infinity;
         bl.innerHTML+=j<=cash.dl-1?lead('Снова можно с '+dm(addD(today,j)),eur(Math.floor(j*per))):lead('Снова можно с '+dm(pn),eur(L)); } else { const j=Math.max(1,Math.ceil((MIN-bal)/L)), back=addD(today,j), rest=Math.floor(j*L+bal); bl.innerHTML+=lead('Снова можно с '+dm(back),eur(rest)); } }
@@ -1032,8 +1031,7 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
     const A=acct(), now0=Math.round(saves.reduce((t,v)=>t+v.amount,0)), eat=Math.ceil(cover(A)), got=now0-eat, n=v=>Math.round(v).toLocaleString('ru-RU').replace(/\s/g,'\u00a0');
     const pct=target>0?Math.max(0,Math.min(100,got/target*100)):0, arc='M12 70 A58 58 0 0 1 128 70';
     vm.innerHTML='<div class="lbl">Накоплено из '+eur(target).replace(/ /g,'\u00a0')+'</div><div class="gauge" role="img" aria-label="Накоплено '+eur(got)+' из '+eur(target)+'"><svg viewBox="0 0 140 76" aria-hidden="true"><path class="gt" d="'+arc+'" pathLength="100"/>'+(pct>0?'<path class="gf" d="'+arc+'" pathLength="100" style="stroke-dasharray:'+pct+' 100"/>':'')+'</svg><div class="gnum"><span class="n">'+n(got)+'</span></div></div>';
-    vl.innerHTML=(A?lead2('На счету сейчас',eur(Math.round(A.bal))):lead2('На счету','внеси в «На счету»'))+(eat>0?lead2('Сейчас в копилке',eur(now0))+lead2('Уйдёт на жизнь до '+dm(addD(A.pn,-1)),'−'+eur(eat)):'')+
-      (cur?lead2('План на '+cur.range,(cur.plan<0?'−':'')+eur(Math.abs(cur.plan)))+lead2('Отложено',(cur.st?'<span class="tag '+cur.st[0]+'">'+cur.st[1]+'</span> ':'')+(cur.fact<0?'−':'')+eur(Math.abs(cur.fact))):'');
+    vl.innerHTML='';
     const tb=document.getElementById('vtb'); tb.innerHTML='';
     saves.slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).forEach(v=>{
       const tr=document.createElement('tr'), c=[0,1,2].map(()=>document.createElement('td'));
