@@ -349,6 +349,13 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
 #vm .gauge{width:200px}
 #sav #vl{margin-top:var(--s2)}
 #vm .gauge .gnum .n{font-size:43px}
+/* Заголовок периода: даты одной ширины, значок ✓ ↑ ↓ — в своей колонке, сумма справа */
+.ph .pt{flex:none;font-variant-numeric:tabular-nums}
+.ph .pst{flex:none;width:24px;display:flex}
+.ph b{margin-left:auto;flex:none}
+.ph .ptg{display:flex;gap:4px;min-width:0;overflow:hidden}
+.ph .ptg .tag{margin-left:0;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ph b{padding-left:8px}
 </style>
 
 </head>
@@ -988,7 +995,8 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       const now=p.from<=today&&today<nx, past=nx<=today, goal=Math.max(0,plan), tol=Math.max(1,goal*.1), df=fact-goal;
       // Плашка: ±10 % от плана — ✓, больше — ↑, меньше — ↓; текущий период до конца не «проседает»
       const st=past||now?(plan<0?(now?null:['t-warn','↓']):df>tol?['t-ok','↑']:df>=-tol?['t-ok','✓']:now?null:['t-warn','↓']):null;
-      cum+=nx<=today?fact:now?Math.max(fact,plan):plan;
+      // Текущий период: отложено по факту, но не меньше плана; если план — проедать (меньше нуля), берётся меньшее
+      cum+=nx<=today?fact:now?(plan<0?Math.min(fact,plan):Math.max(fact,plan)):plan;
       if(now) cur={range:dm(p.from)+'–'+dm(to),plan,fact,st};
       const pk=iso(p.from), open=pk in pOpen?pOpen[pk]:now, range=dm(p.from)+'–'+dm(to), yr=p.from.getFullYear();
       const mk=p.from.getFullYear()+'-'+(p.from.getMonth()+1), pmk=i?P[i-1].from.getFullYear()+'-'+(P[i-1].from.getMonth()+1):'';
@@ -996,13 +1004,13 @@ main[data-tab="long"] .tabs::before{transform:translateX(100%)}
       // Год — заголовком перед первым периодом года, в датах периодов года нет
       if(!i||P[i-1].from.getFullYear()!==yr) html+='<div class="yr">'+yr+'</div>';
       html+='<div class="per'+(now?' now':'')+(open?'':' closed')+'">'+
-        '<button type="button" class="ph" data-p="'+pk+'" aria-expanded="'+open+'"><span class="pt">'+range+'</span>'+(now?'<span class="tag">сейчас</span>':'')+tag+
-        (st?'<span class="tag '+st[0]+'">'+st[1]+'</span>':'')+'<b>'+(plan<0?'<span class="tag t-warn">−'+money(-plan)+'</span>':'+'+money(plan))+'</b></button>'+
+        '<button type="button" class="ph" data-p="'+pk+'" aria-expanded="'+open+'"><span class="pt">'+range+'</span><span class="pst">'+(st?'<span class="tag '+st[0]+'">'+st[1]+'</span>':'')+'</span><span class="ptg">'+(now?'<span class="tag">сейчас</span>':'')+tag+'</span>'+
+        '<b>'+(plan<0?'−'+money(-plan):'+'+money(plan))+'</b></button>'+
         '<div class="pbd"><div class="pl"><span>Доход</span><b>+'+money(inS)+'</b></div>'+ins.map(li).join('')+
         '<div class="pl"><span>На жизнь'+(nx<=today?', по истории':'')+'</span><b>−'+money(lifeS)+'</b></div>'+(now?li(['','потрачено по истории',spentP]):'')+
         (pays.length?'<div class="pl"><span>Обязательные платежи</span><b>−'+money(payS)+'</b></div>'+pays.map(li).join(''):'')+
         (unks.length?'<div class="pl"><span>Неопознанное</span><b>−'+money(unkS)+'</b></div>'+unks.map(li).join(''):'')+
-        '<div class="ps">'+(plan>=0?'<div><span>Отложить</span><b>+'+money(plan)+'</b></div>':'<div><span>Не хватает</span><b><span class="tag t-warn">−'+money(-plan)+'</span></b></div>')+'</div>'+
+        '<div class="ps">'+(plan>=0?'<div><span>Отложить</span><b>+'+money(plan)+'</b></div>':'<div><span>Не хватает</span><b>−'+money(-plan)+'</b></div>')+'</div>'+
         '<div class="pf">'+(past||now?'<div><span>Отложено</span><b>'+money(fact)+'</b></div>':'')+'<div><span>В копилке</span><b>'+money(cum)+'</b></div></div></div></div>';
     });
     // Итог — сколько будет в копилке к концу плана: отложенное по факту + план на оставшиеся периоды
